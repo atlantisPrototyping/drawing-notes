@@ -50,9 +50,19 @@ def load_data():
 
 df = load_data()
 
+# Define logical order for drawing notes (typical engineering drawing sequence)
+TYPE_ORDER = {
+    'General': 0,
+    'Tolerances': 1,
+    'Metalic': 2,
+    'Sheetmetal': 3,
+    'Tube': 4,
+    'Weld': 5,
+    'Assembly': 6,
+    'Inspection': 7
+}
+
 # Initialize session state
-if 'selected_notes' not in st.session_state:
-    st.session_state.selected_notes = []
 if 'selected_indices' not in st.session_state:
     st.session_state.selected_indices = set()
 if 'clear_trigger' not in st.session_state:
@@ -83,7 +93,6 @@ with col_left:
         # Clear button with proper spacing
         st.write("")  # Spacer for alignment
         if st.button("🗑️ Clear", use_container_width=True):
-            st.session_state.selected_notes = []
             st.session_state.selected_indices = set()
             st.session_state.clear_trigger += 1
             st.rerun()
@@ -107,30 +116,32 @@ with col_left:
         if st.checkbox(f"**{row['Name']}** ({row['Type']})", 
                       key=checkbox_key, 
                       value=is_checked):
-            # Add to selected notes if not already there
-            if idx not in st.session_state.selected_indices:
-                st.session_state.selected_notes.append({
-                    'index': idx,
-                    'text': row['Text'],
-                    'name': row['Name'],
-                    'type': row['Type']
-                })
-                st.session_state.selected_indices.add(idx)
+            st.session_state.selected_indices.add(idx)
         else:
-            # Remove from selected notes if unchecked
-            if idx in st.session_state.selected_indices:
-                st.session_state.selected_notes = [
-                    note for note in st.session_state.selected_notes 
-                    if note['index'] != idx
-                ]
-                st.session_state.selected_indices.remove(idx)
+            st.session_state.selected_indices.discard(idx)
 
 with col_right:
     st.subheader("Generated Notes")
 
-    if st.session_state.selected_notes:
-        # Combine all selected notes in order
-        final_text = "\n\n".join([note['text'] for note in st.session_state.selected_notes])
+    if st.session_state.selected_indices:
+        # Get selected notes from dataframe and sort by logical order
+        selected_notes_data = []
+        for idx in st.session_state.selected_indices:
+            row = df.iloc[idx]
+            selected_notes_data.append({
+                'index': idx,
+                'text': row['Text'],
+                'name': row['Name'],
+                'type': row['Type'],
+                'type_order': TYPE_ORDER.get(row['Type'], 999),  # Default to end if type not in order
+                'original_index': idx  # Preserve original CSV order within same type
+            })
+
+        # Sort by: 1) Type order, 2) Original CSV index (maintains logical order within type)
+        selected_notes_data.sort(key=lambda x: (x['type_order'], x['original_index']))
+
+        # Combine all selected notes in logical order
+        final_text = "\n\n".join([note['text'] for note in selected_notes_data])
 
         # Create custom HTML component with blueprint style
         st.components.v1.html(
