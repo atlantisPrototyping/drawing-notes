@@ -111,6 +111,7 @@ with col_left:
 with col_right:
     st.subheader("Generated Notes")
 
+    # Determine what text to show
     if st.session_state.selected_indices:
         # Get selected notes from dataframe and sort by logical order
         selected_notes_data = []
@@ -130,93 +131,102 @@ with col_right:
 
         # Combine all selected notes in logical order
         final_text = "\n\n".join([note['text'] for note in selected_notes_data])
+        show_buttons = True
+    else:
+        # Show placeholder message when empty
+        final_text = "👈 Select notes from the left panel"
+        show_buttons = False
 
-        # Create custom HTML component with blueprint style and aligned buttons
-        st.components.v1.html(
-            f"""
-            <div style="position: relative;">
-                <textarea id="textToCopy" style="
-                    width: 100%; 
-                    height: 450px; 
-                    padding: 12px; 
-                    font-family: 'Courier New', monospace; 
-                    font-size: 13px; 
-                    background-color: #003559;
-                    color: #FFFFFF;
-                    border: 2px solid #006DAA;
-                    border-radius: 5px;
-                    box-shadow: 0 0 10px rgba(0, 109, 170, 0.3);
-                    resize: vertical;
-                ">{final_text}</textarea>
-                <div style="margin-top: 10px; display: flex; gap: 10px; align-items: center;">
-                    <button onclick="copyToClipboard()" style="
-                        background-color: #1BA099; 
-                        color: white; 
-                        padding: 10px 20px; 
-                        border: none; 
-                        border-radius: 5px; 
-                        cursor: pointer; 
-                        font-size: 15px; 
-                        font-weight: 500;
-                        transition: background-color 0.3s;
-                        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-                    ">
-                        📋 Copy to Clipboard
-                    </button>
-                    <span id="copyMessage" style="
-                        color: #1BA099; 
-                        font-weight: 600;
-                        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-                        font-size: 14px;
-                    "></span>
-                </div>
+    # Create custom HTML component with blueprint style (always visible)
+    st.components.v1.html(
+        f"""
+        <div style="position: relative;">
+            <textarea id="textToCopy" style="
+                width: 100%; 
+                height: 450px; 
+                padding: 12px; 
+                font-family: 'Courier New', monospace; 
+                font-size: 13px; 
+                background-color: #003559;
+                color: #FFFFFF;
+                border: 2px solid #006DAA;
+                border-radius: 5px;
+                box-shadow: 0 0 10px rgba(0, 109, 170, 0.3);
+                resize: vertical;
+                {'text-align: center; padding-top: 200px; font-size: 16px;' if not show_buttons else ''}
+            " {'readonly' if not show_buttons else ''}>{final_text}</textarea>
+            <div style="margin-top: 10px; display: {'flex' if show_buttons else 'none'}; gap: 10px; align-items: center;">
+                <button onclick="copyToClipboard()" style="
+                    background-color: #1BA099; 
+                    color: white; 
+                    padding: 10px 20px; 
+                    border: none; 
+                    border-radius: 5px; 
+                    cursor: pointer; 
+                    font-size: 15px; 
+                    font-weight: 500;
+                    transition: background-color 0.3s;
+                    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+                ">
+                    📋 Copy to Clipboard
+                </button>
+                <span id="copyMessage" style="
+                    color: #1BA099; 
+                    font-weight: 600;
+                    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+                    font-size: 14px;
+                "></span>
             </div>
+        </div>
 
-            <script>
-            // Add hover effects to button
-            const copyBtn = document.querySelector('button');
+        <script>
+        // Add hover effects to button
+        const copyBtn = document.querySelector('button');
 
+        if (copyBtn) {{
             copyBtn.addEventListener('mouseenter', function() {{
                 this.style.backgroundColor = '#158a82';
             }});
             copyBtn.addEventListener('mouseleave', function() {{
                 this.style.backgroundColor = '#1BA099';
             }});
+        }}
 
-            function copyToClipboard() {{
-                const text = document.getElementById('textToCopy').value;
+        function copyToClipboard() {{
+            const text = document.getElementById('textToCopy').value;
 
-                // Use modern Clipboard API
-                if (navigator.clipboard && window.isSecureContext) {{
-                    navigator.clipboard.writeText(text).then(function() {{
-                        document.getElementById('copyMessage').textContent = '✅ Copied!';
-                        setTimeout(function() {{
-                            document.getElementById('copyMessage').textContent = '';
-                        }}, 2000);
-                    }}, function(err) {{
-                        document.getElementById('copyMessage').textContent = '❌ Copy failed';
-                    }});
-                }} else {{
-                    // Fallback for older browsers
-                    const textArea = document.getElementById('textToCopy');
-                    textArea.select();
-                    try {{
-                        document.execCommand('copy');
-                        document.getElementById('copyMessage').textContent = '✅ Copied!';
-                        setTimeout(function() {{
-                            document.getElementById('copyMessage').textContent = '';
-                        }}, 2000);
-                    }} catch (err) {{
-                        document.getElementById('copyMessage').textContent = '❌ Copy failed';
-                    }}
+            // Use modern Clipboard API
+            if (navigator.clipboard && window.isSecureContext) {{
+                navigator.clipboard.writeText(text).then(function() {{
+                    document.getElementById('copyMessage').textContent = '✅ Copied!';
+                    setTimeout(function() {{
+                        document.getElementById('copyMessage').textContent = '';
+                    }}, 2000);
+                }}, function(err) {{
+                    document.getElementById('copyMessage').textContent = '❌ Copy failed';
+                }});
+            }} else {{
+                // Fallback for older browsers
+                const textArea = document.getElementById('textToCopy');
+                textArea.select();
+                try {{
+                    document.execCommand('copy');
+                    document.getElementById('copyMessage').textContent = '✅ Copied!';
+                    setTimeout(function() {{
+                        document.getElementById('copyMessage').textContent = '';
+                    }}, 2000);
+                }} catch (err) {{
+                    document.getElementById('copyMessage').textContent = '❌ Copy failed';
                 }}
             }}
-            </script>
-            """,
-            height=550
-        )
+        }}
+        </script>
+        """,
+        height=550
+    )
 
-        # Buttons below: Download and Clear side by side
+    # Buttons below: Download and Clear side by side (only when notes selected)
+    if show_buttons:
         col_download, col_clear, col_spacer = st.columns([1, 1, 2])
 
         with col_download:
@@ -233,9 +243,6 @@ with col_right:
                 st.session_state.selected_indices = set()
                 st.session_state.clear_trigger += 1
                 st.rerun()
-
-    else:
-        st.info("👈 Select notes from the left panel")
 
 # Footer
 st.markdown("---")
