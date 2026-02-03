@@ -1,0 +1,172 @@
+﻿Name,A,Text,Type
+CAD is master,No,"-3D CAD model is the master reference.
+-In case of discrepancy between drawing and model, CAD model takes precedence.
+-Contact engineering for clarification.",General
+General tolerances,No,"-General tolerances according to ISO 2768-mK:
+  Linear dimensions: ±0.1 mm (m-class, medium)
+  Angular dimensions: ±0.5° (K-class)
+-Surface roughness according to ISO 1302
+  unless otherwise specified: Ra 3.2 μm (N8)",Tolerances
+Geometric tolerances,No,"-Geometric tolerances according to ISO 1101 (GD&T).
+-Datum reference frame as indicated on drawing.
+-Tolerance zone applies to entire feature unless otherwise specified.
+-Maximum Material Condition (MMC) or Least Material Condition (LMC) as indicated.",Tolerances
+Surface finish specific,No,"-Turned surfaces: Ra 3.2 μm (N8) unless otherwise specified.
+-Milled surfaces: Ra 3.2 μm (N8).
+-Ground surfaces: Ra 0.8 μm (N6).
+-Lapped/honed surfaces: Ra 0.4 μm (N5).
+-Polished surfaces: Ra 0.2 μm (N4).
+-Lay direction indicated by symbol when critical.",Tolerances
+Positional tolerances,No,"-Hole pattern positional tolerance: [specify] mm diameter.
+-True position measured at Maximum Material Condition (MMC) unless stated.
+-Datum reference: [specify datum features A, B, C].
+-Verify position with functional gauge or CMM.",Tolerances
+Sharp edges,No,"-Remove sharp edges and deburr according to ISO 13715.
+-Edge break: 0.1-0.3 mm unless otherwise specified.
+-No burrs permitted on finished parts.",Metalic
+CNC machining general,No,"-All machined surfaces: Ra 3.2 μm (N8) unless otherwise specified.
+-Break sharp edges 0.1-0.3 mm unless otherwise specified.
+-Remove all burrs and sharp edges.
+-Clean parts after machining.",Metalic
+Thread specifications,No,"-All threads ISO metric standard (ISO 68-1) unless otherwise specified.
+-Thread tolerance class: 6H/6g (medium fit).
+-Threads to be clean and free from chips and burrs.
+-Check thread with GO/NO-GO gauges.",Metalic
+Hole drilling,No,"-All drilled holes perpendicular to surface ±0.5° unless otherwise specified.
+-Hole position tolerance: ±0.1 mm unless otherwise specified.
+-Deburr hole entry and exit.
+-Drill diameter tolerance: ISO 286 H11.",Metalic
+Tapping,No,"-Tap holes after all heat treatment operations.
+-Thread engagement: minimum 1.5 × nominal diameter for steel.
+-Tapped holes to be clean and free from swarf.
+-Use cutting fluid during tapping operation.",Metalic
+Milling and facing,No,"-Surface flatness: 0.05 mm per 100 mm unless otherwise specified.
+-Surface finish: Ra 3.2 μm (N8) for general milling.
+-Remove cutter marks if specified.
+-Check dimensional accuracy after machining.",Metalic
+Sheetmetal bending,No,"-Minimum inside bend radius: ≥ 1.0 × t (material thickness).
+-Bend angle tolerance: ±1° unless otherwise specified.
+-Do not crack, tear or excessively thin the material at bends.
+-Maintain material temper condition. Do not anneal unless specified.",Sheetmetal
+Sheetmetal tolerances,No,"-Bend angle tolerance: ±1° unless otherwise specified.
+-Hole position tolerance: ±0.15 mm.
+-Bend line position: ±0.5 mm.
+-Flatness: ±0.5 mm per 100 mm unless otherwise specified.",Sheetmetal
+Sheetmetal finishing,No,"-Deburr all edges to 0.1-0.3 mm radius.
+-Grind sharp edges smooth where specified.
+-Remove all weld spatter and discoloration.
+-Clean parts: degrease and remove cutting fluid residue.",Sheetmetal
+Sheetmetal forming,No,"-Grain direction: form bends perpendicular to rolling direction when possible.
+-No cracks, tears, or orange peel at formed features.
+-Spring-back compensation included in tooling.
+-Minimum distance from hole to bend: 2.5 × material thickness.",Sheetmetal
+Tube bending,No,"-Minimum inside bend radius: ≥ 2.0 × D (tube outer diameter).
+-Wall thickness reduction: maximum 10% at bend.
+-Do not crack, tear or excessively thin the material at bends.
+-Maintain material temper condition.",Tube
+Welding,No,"-Welds according to ISO 2553.
+-All welds continuous unless otherwise specified.
+-Welding process: 141 (GTAW/TIG) according to ISO 4063.
+-Remove welding spatter completely.
+-Welds shall be free from cracks, porosity, and undercut.",Weld
+Welding preparation,No,"-Clean weld areas before welding: remove oil, grease, paint, rust, scale.
+-Bevel edges according to joint design (ISO 9692-1).
+-Root gap and land dimensions as specified.
+-Preheat material if required by welding procedure.",Weld
+Post-weld treatment,No,"-Remove slag, spatter, and oxidation from all welds.
+-Grind welds flush where specified (indicate on drawing).
+-Visual inspection: no cracks, porosity, undercut, or incomplete fusion.
+-Stress relieve welded assemblies if specified.",Weld
+Weld symbols,No,"-Welding symbols according to ISO 2553.
+-Arrow side vs. other side clearly indicated.
+-Weld size, length, and pitch as specified.
+-Finish symbols: C (chipping), G (grinding), M (machining).",Weld
+Assembly,No,"-Flatness and perpendicularity according to ISO 1101.
+-Assembly dimensions take precedence over individual part dimensions.
+-Check fit and function before final assembly.",Assembly
+Welded assembly,No,"-Check alignment of welded parts within ±0.5 mm before welding.
+-Fixture and clamp parts to prevent distortion.
+-Verify dimensions after welding and cooling.",Assembly
+Fastener specifications,No,"-All fasteners ISO metric standard unless otherwise specified.
+-Tightening torque: [specify] Nm (use calibrated torque wrench).
+-Apply threadlocker: [specify type and locations].
+-Washers: use where specified on assembly drawing.
+-Check fastener engagement: minimum 1.5 × diameter.",Assembly
+Assembly sequence,No,"-Follow assembly sequence as specified in work instructions.
+-Apply lubricant/grease to [specify locations and type].
+-Check for free movement and proper fit during assembly.
+-Verify subassembly dimensions before final assembly.
+-Torque fasteners in specified sequence.",Assembly
+Bearing installation,No,"-Press fit bearings: use arbor press with support fixture.
+-Heat bearings to [specify temperature, typically 80-100°C] before installation.
+-Do not heat bearings above 120°C.
+-Ensure bearings seat properly against shoulders.
+-Lubricate bearings after installation.",Assembly
+Heat treatment general,No,"-Heat treatment according to material specification.
+-Provide machining allowance for distortion: +0.3 to +0.5 mm per side.
+-All dimensions apply after heat treatment.
+-Material certification (EN 10204 3.1) required.",Heat Treatment
+Hardening,No,"-Harden to [specify HRC range, e.g., 58-62 HRC].
+-Quench medium: [specify: oil/water/polymer/air].
+-Tempering: [specify temperature and time].
+-Measure hardness at locations marked on drawing.",Heat Treatment
+Stress relieving,No,"-Stress relieve at [specify temperature, typically 550-650°C] for [time, typically 2-4 hours].
+-Perform after rough machining, before finish machining.
+-Slow cooling in furnace to room temperature.
+-Prevents distortion during final machining.",Heat Treatment
+Carburizing,No,"-Case depth: [specify, e.g., 0.5-0.8 mm] measured at 550 HV.
+-Surface hardness: [specify, e.g., 58-62 HRC].
+-Core hardness: [specify, e.g., 30-40 HRC].
+-Carburizing according to ISO 2639.",Heat Treatment
+Nitriding,No,"-Nitriding process: [specify: gas/plasma/salt bath].
+-Case depth: [specify, e.g., 0.1-0.3 mm].
+-Surface hardness: [specify, e.g., 650-850 HV].
+-Nitriding after all machining operations.",Heat Treatment
+Coating general,No,"-Apply coating after all machining, welding, and heat treatment.
+-Mask threaded holes, bearing surfaces, and locating features.
+-Coating thickness: [specify] μm.
+-Coating adhesion test according to ISO 2409.",Surface Treatment
+Anodizing aluminum,No,"-Anodize according to ISO 7599.
+-Type II sulfuric acid anodizing unless otherwise specified.
+-Anodizing thickness: [specify, typically 5-25 μm].
+-Color: [specify RAL/Pantone] or natural.
+-Seal anodized surface (hot water or dichromate seal).",Surface Treatment
+Powder coating,No,"-Powder coat after degreasing and phosphate treatment.
+-Coating thickness: 60-80 μm (ISO 2808).
+-Color: RAL [specify number].
+-Gloss level: [specify: matte/satin/gloss].
+-Cure according to powder manufacturer specifications.",Surface Treatment
+Electroplating,No,"-Plating type: [specify: zinc/nickel/chrome/tin].
+-Plating thickness: [specify] μm.
+-Zinc plating: ISO 2081, Fe/Zn [thickness][chromate].
+-Nickel plating: ISO 1458.
+-Check plating thickness with coating gauge.",Surface Treatment
+Passivation stainless steel,No,"-Passivate stainless steel according to ASTM A967.
+-Process: [specify: citric acid/nitric acid].
+-Remove free iron contamination before passivation.
+-Final rinse with deionized water.
+-Salt spray test: minimum 24 hours (ASTM B117).",Surface Treatment
+Inspection of dimensions,No,"-All dimensions in millimeters unless otherwise specified.
+-All dimensions apply after heat treatment, welding, and finish machining.
+-Inspection temperature: 20°C ±2°C (ISO 1).",Inspection
+Inspection welding,No,"-General welding tolerances according to ISO 13920, tolerance class B.
+-Visual inspection of welds according to ISO 17637, acceptance level B.
+-Weld surface shall be free from cracks, porosity, and spatter.",Inspection
+Material certification,No,"-Material test certificate required: EN 10204 Type 3.1.
+-Certificate must show: chemical composition, mechanical properties, heat number.
+-Traceability: mark parts with heat number or batch code.
+-Retain certificates for quality records.",Inspection
+First article inspection,No,"-First article inspection (FAI) required before production.
+-Submit dimensional report with measured values for all features.
+-Include material certification and process certifications.
+-Approval required before continuing production.",Inspection
+Non-destructive testing,No,"-NDT method: [specify: UT/RT/MT/PT/ET].
+-Acceptance criteria: [specify standard and level].
+-Test frequency: [specify: 100%/sampling/first article].
+-Mark tested parts with inspector stamp and date.
+-Record and retain NDT reports.",Inspection
+Dimensional inspection,No,"-Measure all critical dimensions marked with ⊕ or boxed.
+-Use calibrated measuring equipment (traceable to national standards).
+-Inspection temperature: 20°C ±2°C.
+-Record measurements on inspection report.
+-Parts out of tolerance to be quarantined.",Inspection
