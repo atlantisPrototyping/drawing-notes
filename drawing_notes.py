@@ -74,28 +74,16 @@ col_left, col_right = st.columns([1, 1.5])
 with col_left:
     st.subheader("Select Notes")
 
-    # Type selector and clear button in same row
-    col_select, col_clear = st.columns([2, 1])
+    # Type selector
+    types = df['Type'].unique().tolist()
+    types.sort()
 
-    with col_select:
-        # Get unique types
-        types = df['Type'].unique().tolist()
-        types.sort()
-
-        # Type selector
-        selected_type = st.selectbox(
-            "Filter by type:",
-            options=["All"] + types,
-            index=0
-        )
-
-    with col_clear:
-        # Clear button with proper spacing
-        st.write("")  # Spacer for alignment
-        if st.button("🗑️ Clear", use_container_width=True):
-            st.session_state.selected_indices = set()
-            st.session_state.clear_trigger += 1
-            st.rerun()
+    # Type selector
+    selected_type = st.selectbox(
+        "Filter by type:",
+        options=["All"] + types,
+        index=0
+    )
 
     st.markdown("---")
 
@@ -133,17 +121,17 @@ with col_right:
                 'text': row['Text'],
                 'name': row['Name'],
                 'type': row['Type'],
-                'type_order': TYPE_ORDER.get(row['Type'], 999),  # Default to end if type not in order
-                'original_index': idx  # Preserve original CSV order within same type
+                'type_order': TYPE_ORDER.get(row['Type'], 999),
+                'original_index': idx
             })
 
-        # Sort by: 1) Type order, 2) Original CSV index (maintains logical order within type)
+        # Sort by: 1) Type order, 2) Original CSV index
         selected_notes_data.sort(key=lambda x: (x['type_order'], x['original_index']))
 
         # Combine all selected notes in logical order
         final_text = "\n\n".join([note['text'] for note in selected_notes_data])
 
-        # Create custom HTML component with blueprint style
+        # Create custom HTML component with blueprint style and aligned buttons
         st.components.v1.html(
             f"""
             <div style="position: relative;">
@@ -171,21 +159,50 @@ with col_right:
                         font-size: 15px; 
                         font-weight: 500;
                         transition: background-color 0.3s;
+                        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
                     ">
                         📋 Copy to Clipboard
                     </button>
-                    <span id="copyMessage" style="color: #1BA099; font-weight: bold;"></span>
+                    <button onclick="clearNotes()" style="
+                        background-color: #D94848; 
+                        color: white; 
+                        padding: 10px 20px; 
+                        border: none; 
+                        border-radius: 5px; 
+                        cursor: pointer; 
+                        font-size: 15px; 
+                        font-weight: 500;
+                        transition: background-color 0.3s;
+                        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+                    ">
+                        🗑️ Clear
+                    </button>
+                    <span id="copyMessage" style="
+                        color: #1BA099; 
+                        font-weight: 600;
+                        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+                        font-size: 14px;
+                    "></span>
                 </div>
             </div>
 
             <script>
-            // Add hover effect to button
-            const btn = document.querySelector('button');
-            btn.addEventListener('mouseenter', function() {{
+            // Add hover effects to buttons
+            const copyBtn = document.querySelectorAll('button')[0];
+            const clearBtn = document.querySelectorAll('button')[1];
+
+            copyBtn.addEventListener('mouseenter', function() {{
                 this.style.backgroundColor = '#158a82';
             }});
-            btn.addEventListener('mouseleave', function() {{
+            copyBtn.addEventListener('mouseleave', function() {{
                 this.style.backgroundColor = '#1BA099';
+            }});
+
+            clearBtn.addEventListener('mouseenter', function() {{
+                this.style.backgroundColor = '#B83838';
+            }});
+            clearBtn.addEventListener('mouseleave', function() {{
+                this.style.backgroundColor = '#D94848';
             }});
 
             function copyToClipboard() {{
@@ -216,19 +233,39 @@ with col_right:
                     }}
                 }}
             }}
+
+            function clearNotes() {{
+                // Trigger Streamlit rerun to clear selections
+                window.parent.postMessage({{
+                    type: 'streamlit:setComponentValue',
+                    value: 'clear'
+                }}, '*');
+
+                // Show confirmation message
+                document.getElementById('copyMessage').textContent = '🗑️ Cleared!';
+                document.getElementById('copyMessage').style.color = '#D94848';
+                setTimeout(function() {{
+                    document.getElementById('copyMessage').textContent = '';
+                    document.getElementById('copyMessage').style.color = '#1BA099';
+                    // Reload page to clear
+                    window.parent.location.reload();
+                }}, 1000);
+            }}
             </script>
             """,
             height=550
         )
 
-        # Download button below
-        st.download_button(
-            label="💾 Download as TXT",
-            data=final_text,
-            file_name="drawing_notes.txt",
-            mime="text/plain",
-            use_container_width=False
-        )
+        # Download button below with proper alignment
+        col_download, col_spacer = st.columns([1, 3])
+        with col_download:
+            st.download_button(
+                label="💾 Download as TXT",
+                data=final_text,
+                file_name="drawing_notes.txt",
+                mime="text/plain",
+                use_container_width=True
+            )
 
     else:
         st.info("👈 Select notes from the left panel")
