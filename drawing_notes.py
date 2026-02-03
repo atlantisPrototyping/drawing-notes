@@ -7,24 +7,8 @@ st.set_page_config(page_title="Drawing Notes Generator", page_icon="📐", layou
 # Custom CSS for color #1BA099 with stronger selectors
 st.markdown("""
 <style>
-/* Force checkbox color when checked - multiple selectors for priority */
+/* Force checkbox color when checked */
 input[type="checkbox"] {
-    accent-color: #1BA099 !important;
-}
-
-input[type="checkbox"]:checked {
-    background-color: #1BA099 !important;
-    border-color: #1BA099 !important;
-    accent-color: #1BA099 !important;
-}
-
-/* Streamlit specific checkbox styling */
-div[data-testid="stCheckbox"] input[type="checkbox"]:checked {
-    background-color: #1BA099 !important;
-    border-color: #1BA099 !important;
-}
-
-div[data-testid="stCheckbox"] input:checked {
     accent-color: #1BA099 !important;
 }
 
@@ -40,14 +24,16 @@ div[data-testid="stCheckbox"] input:checked {
     border-color: #158a82 !important;
 }
 
-.stDownloadButton > button:active {
-    background-color: #0d6960 !important;
+/* Clear button */
+.stButton > button {
+    background-color: #dc3545 !important;
+    border-color: #dc3545 !important;
+    color: white !important;
 }
 
-/* Selectbox focus */
-.stSelectbox > div > div:focus-within {
-    border-color: #1BA099 !important;
-    box-shadow: 0 0 0 0.2rem rgba(27, 160, 153, 0.25) !important;
+.stButton > button:hover {
+    background-color: #c82333 !important;
+    border-color: #bd2130 !important;
 }
 </style>
 """, unsafe_allow_html=True)
@@ -62,6 +48,12 @@ def load_data():
     return pd.read_csv('drawing_notes.csv', encoding='utf-8-sig')
 
 df = load_data()
+
+# Initialize session state for selected notes
+if 'selected_notes' not in st.session_state:
+    st.session_state.selected_notes = []
+if 'selected_indices' not in st.session_state:
+    st.session_state.selected_indices = set()
 
 # Create type selector
 col1, col2 = st.columns([1, 2])
@@ -88,31 +80,80 @@ with col1:
 
     st.info(f"**{len(filtered_notes)}** notes available")
 
+    # Clear button
+    if st.button("🗑️ Clear All Notes", use_container_width=True):
+        st.session_state.selected_notes = []
+        st.session_state.selected_indices = set()
+        st.rerun()
+
 with col2:
     st.subheader("Select Notes")
 
     # Show checkboxes for each note
-    selected_notes = []
-
     for idx, row in filtered_notes.iterrows():
-        if st.checkbox(f"**{row['Name']}** ({row['Type']})", key=f"check_{idx}"):
-            selected_notes.append(row['Text'])
+        # Check if this note is already selected
+        is_checked = idx in st.session_state.selected_indices
+
+        if st.checkbox(f"**{row['Name']}** ({row['Type']})", 
+                      key=f"check_{idx}", 
+                      value=is_checked):
+            # Add to selected notes if not already there
+            if idx not in st.session_state.selected_indices:
+                st.session_state.selected_notes.append({
+                    'index': idx,
+                    'text': row['Text'],
+                    'name': row['Name'],
+                    'type': row['Type']
+                })
+                st.session_state.selected_indices.add(idx)
+        else:
+            # Remove from selected notes if unchecked
+            if idx in st.session_state.selected_indices:
+                st.session_state.selected_notes = [
+                    note for note in st.session_state.selected_notes 
+                    if note['index'] != idx
+                ]
+                st.session_state.selected_indices.remove(idx)
 
 st.markdown("---")
 
 # Generate final text
-if selected_notes:
+if st.session_state.selected_notes:
     st.subheader("📝 Generated Notes")
 
-    # Combine all selected notes
-    final_text = "\n\n".join(selected_notes)
+    # Show selected notes count
+    st.info(f"**{len(st.session_state.selected_notes)}** notes selected")
 
-    # Create custom HTML component with copy button using Clipboard API
+    # Combine all selected notes in order
+    final_text = "\n\n".join([note['text'] for note in st.session_state.selected_notes])
+
+    # Create custom HTML component with blueprint style
     st.components.v1.html(
         f"""
         <div style="position: relative;">
-            <textarea id="textToCopy" style="width: 100%; height: 300px; padding: 10px; font-family: monospace; font-size: 14px; border: 1px solid #ddd; border-radius: 5px;">{final_text}</textarea>
-            <button onclick="copyToClipboard()" style="margin-top: 10px; background-color: #1BA099; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; font-size: 16px; transition: background-color 0.3s;">
+            <textarea id="textToCopy" style="
+                width: 100%; 
+                height: 300px; 
+                padding: 10px; 
+                font-family: 'Courier New', monospace; 
+                font-size: 14px; 
+                background-color: #003559;
+                color: #FFFFFF;
+                border: 2px solid #006DAA;
+                border-radius: 5px;
+                box-shadow: 0 0 10px rgba(0, 109, 170, 0.3);
+            ">{final_text}</textarea>
+            <button onclick="copyToClipboard()" style="
+                margin-top: 10px; 
+                background-color: #1BA099; 
+                color: white; 
+                padding: 10px 20px; 
+                border: none; 
+                border-radius: 5px; 
+                cursor: pointer; 
+                font-size: 16px; 
+                transition: background-color 0.3s;
+            ">
                 📋 Copy to Clipboard
             </button>
             <span id="copyMessage" style="margin-left: 10px; color: #1BA099; font-weight: bold;"></span>
