@@ -90,7 +90,7 @@ with header_col1:
 
 with header_col2:
     st.markdown('<div class="logo-container">', unsafe_allow_html=True)
-    st.image("logoVerde.png", width=300)
+    st.image("logoVerde.png", width=200)
     st.markdown('</div>', unsafe_allow_html=True)
 
 st.markdown("---")
