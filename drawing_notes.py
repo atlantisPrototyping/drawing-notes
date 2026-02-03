@@ -137,25 +137,11 @@ with col_right:
         final_text = "👈 Select notes from the left panel"
         show_buttons = False
 
-    # Create custom HTML component with blueprint style (always visible)
-    st.components.v1.html(
-        f"""
-        <div style="position: relative;">
-            <textarea id="textToCopy" style="
-                width: 100%; 
-                height: 450px; 
-                padding: 12px; 
-                font-family: 'Courier New', monospace; 
-                font-size: 13px; 
-                background-color: #003559;
-                color: #FFFFFF;
-                border: 2px solid #006DAA;
-                border-radius: 5px;
-                box-shadow: 0 0 10px rgba(0, 109, 170, 0.3);
-                resize: vertical;
-                {'text-align: center; padding-top: 200px; font-size: 16px;' if not show_buttons else ''}
-            " {'readonly' if not show_buttons else ''}>{final_text}</textarea>
-            <div style="margin-top: 10px; display: {'flex' if show_buttons else 'none'}; gap: 10px; align-items: center;">
+    # Create the HTML with buttons
+    button_section = ""
+    if show_buttons:
+        button_section = """
+            <div style="margin-top: 10px; display: flex; gap: 10px; align-items: center;">
                 <button onclick="copyToClipboard()" style="
                     background-color: #1BA099; 
                     color: white; 
@@ -177,17 +163,36 @@ with col_right:
                     font-size: 14px;
                 "></span>
             </div>
+        """
+
+    st.components.v1.html(
+        f"""
+        <div style="position: relative;">
+            <textarea id="textToCopy" style="
+                width: 100%; 
+                height: 450px; 
+                padding: 12px; 
+                font-family: 'Courier New', monospace; 
+                font-size: 13px; 
+                background-color: #003559;
+                color: #FFFFFF;
+                border: 2px solid #006DAA;
+                border-radius: 5px;
+                box-shadow: 0 0 10px rgba(0, 109, 170, 0.3);
+                resize: vertical;
+                {'text-align: center; padding-top: 200px; font-size: 16px;' if not show_buttons else ''}
+            " {'readonly' if not show_buttons else ''}>{final_text}</textarea>
+            {button_section}
         </div>
 
         <script>
-        // Add hover effects to button
-        const copyBtn = document.querySelector('button');
+        const buttons = document.querySelectorAll('button');
 
-        if (copyBtn) {{
-            copyBtn.addEventListener('mouseenter', function() {{
+        if (buttons.length > 0) {{
+            buttons[0].addEventListener('mouseenter', function() {{
                 this.style.backgroundColor = '#158a82';
             }});
-            copyBtn.addEventListener('mouseleave', function() {{
+            buttons[0].addEventListener('mouseleave', function() {{
                 this.style.backgroundColor = '#1BA099';
             }});
         }}
@@ -195,7 +200,6 @@ with col_right:
         function copyToClipboard() {{
             const text = document.getElementById('textToCopy').value;
 
-            // Use modern Clipboard API
             if (navigator.clipboard && window.isSecureContext) {{
                 navigator.clipboard.writeText(text).then(function() {{
                     document.getElementById('copyMessage').textContent = '✅ Copied!';
@@ -206,7 +210,6 @@ with col_right:
                     document.getElementById('copyMessage').textContent = '❌ Copy failed';
                 }});
             }} else {{
-                // Fallback for older browsers
                 const textArea = document.getElementById('textToCopy');
                 textArea.select();
                 try {{
@@ -225,7 +228,7 @@ with col_right:
         height=550
     )
 
-    # Buttons below: Download and Clear side by side (only when notes selected)
+    # Buttons below: Download and Clear side by side
     if show_buttons:
         col_download, col_clear, col_spacer = st.columns([1, 1, 2])
 
