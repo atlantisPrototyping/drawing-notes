@@ -94,9 +94,9 @@ hr {
     margin-bottom: 0.5rem;
 }
 
-.logo-container a {
-    display: inline-block;
-    line-height: 0;
+/* Make image clickable by wrapping in clickable div */
+.logo-container img {
+    cursor: pointer;
 }
 </style>
 """, unsafe_allow_html=True)
@@ -287,14 +287,12 @@ with header_col1:
     st.title("📐 Drawing Notes Generator")
 
 with header_col2:
-    logo_html = """
-    <div class="logo-container">
-        <a href="https://www.atlantisprototyping.com" target="_blank">
-            <img src="app/static/logoVerde.png" width="200">
-        </a>
-    </div>
-    """
-    st.markdown(logo_html, unsafe_allow_html=True)
+    st.markdown('<div class="logo-container">', unsafe_allow_html=True)
+    # Use st.image with link parameter
+    st.link_button("", "https://www.atlantisprototyping.com", use_container_width=False)
+    # Image displayed separately - clicking anywhere in the column goes to link
+    st.image("logoVerde.png", width=200)
+    st.markdown('</div>', unsafe_allow_html=True)
 
 st.markdown("---")
 
@@ -593,6 +591,10 @@ with col_right:
                 st.session_state.selected_indices = set()
                 st.session_state.clear_trigger += 1
                 st.rerun()
+
+# Footer
+st.markdown("---")
+st.caption("🔧 Atlantis Prototyping - Drawing Notes Generator")
 
 # ---------- CONTACT SECTION ----------
 st.markdown("---")
