@@ -31,6 +31,18 @@ input[type="checkbox"] {
     border-color: #158a82 !important;
 }
 
+/* Submit button color */
+div.stButton > button:first-child {
+    background-color: #1BA099 !important;
+    color: white !important;
+    border: none !important;
+}
+
+div.stButton > button:first-child:hover {
+    background-color: #158a82 !important;
+    color: white !important;
+}
+
 /* Compact spacing */
 .stCheckbox {
     margin-bottom: 0.25rem !important;
@@ -270,7 +282,12 @@ with header_col1:
 
 with header_col2:
     st.markdown('<div class="logo-container">', unsafe_allow_html=True)
-    st.image("logoVerde.png", width=400)
+    st.markdown(
+        '<a href="https://www.atlantisprototyping.com" target="_blank">',
+        unsafe_allow_html=True,
+    )
+    st.image("logoVerde.png", width=200)
+    st.markdown("</a>", unsafe_allow_html=True)
     st.markdown('</div>', unsafe_allow_html=True)
 
 st.markdown("---")
@@ -570,10 +587,6 @@ with col_right:
                 st.session_state.selected_indices = set()
                 st.session_state.clear_trigger += 1
                 st.rerun()
-
-# Footer
-st.markdown("---")
-st.caption("🔧 Atlantis Prototyping - Drawing Notes Generator")
 
 # ---------- CONTACT SECTION ----------
 st.markdown("---")
