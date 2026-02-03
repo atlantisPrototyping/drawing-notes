@@ -4,24 +4,35 @@ import pandas as pd
 # Page configuration
 st.set_page_config(page_title="Drawing Notes Generator", page_icon="📐", layout="wide")
 
-# Custom CSS for color #1BA099
+# Custom CSS for color #1BA099 with stronger selectors
 st.markdown("""
 <style>
-/* Checkbox color when checked */
-.stCheckbox > label > div[data-testid="stMarkdownContainer"] > p {
-    color: inherit;
+/* Force checkbox color when checked - multiple selectors for priority */
+input[type="checkbox"] {
+    accent-color: #1BA099 !important;
 }
 
-/* Checkbox checked state */
 input[type="checkbox"]:checked {
     background-color: #1BA099 !important;
     border-color: #1BA099 !important;
+    accent-color: #1BA099 !important;
 }
 
-/* Primary button color */
+/* Streamlit specific checkbox styling */
+div[data-testid="stCheckbox"] input[type="checkbox"]:checked {
+    background-color: #1BA099 !important;
+    border-color: #1BA099 !important;
+}
+
+div[data-testid="stCheckbox"] input:checked {
+    accent-color: #1BA099 !important;
+}
+
+/* Download button color */
 .stDownloadButton > button {
     background-color: #1BA099 !important;
     border-color: #1BA099 !important;
+    color: white !important;
 }
 
 .stDownloadButton > button:hover {
@@ -29,9 +40,14 @@ input[type="checkbox"]:checked {
     border-color: #158a82 !important;
 }
 
+.stDownloadButton > button:active {
+    background-color: #0d6960 !important;
+}
+
 /* Selectbox focus */
 .stSelectbox > div > div:focus-within {
     border-color: #1BA099 !important;
+    box-shadow: 0 0 0 0.2rem rgba(27, 160, 153, 0.25) !important;
 }
 </style>
 """, unsafe_allow_html=True)
@@ -96,13 +112,22 @@ if selected_notes:
         f"""
         <div style="position: relative;">
             <textarea id="textToCopy" style="width: 100%; height: 300px; padding: 10px; font-family: monospace; font-size: 14px; border: 1px solid #ddd; border-radius: 5px;">{final_text}</textarea>
-            <button onclick="copyToClipboard()" style="margin-top: 10px; background-color: #1BA099; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; font-size: 16px;">
+            <button onclick="copyToClipboard()" style="margin-top: 10px; background-color: #1BA099; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; font-size: 16px; transition: background-color 0.3s;">
                 📋 Copy to Clipboard
             </button>
-            <span id="copyMessage" style="margin-left: 10px; color: green; font-weight: bold;"></span>
+            <span id="copyMessage" style="margin-left: 10px; color: #1BA099; font-weight: bold;"></span>
         </div>
 
         <script>
+        // Add hover effect to button
+        const btn = document.querySelector('button');
+        btn.addEventListener('mouseenter', function() {{
+            this.style.backgroundColor = '#158a82';
+        }});
+        btn.addEventListener('mouseleave', function() {{
+            this.style.backgroundColor = '#1BA099';
+        }});
+
         function copyToClipboard() {{
             const text = document.getElementById('textToCopy').value;
 
