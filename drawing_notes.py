@@ -184,7 +184,7 @@ def create_lead_page(name, email, num_notes, note_types, has_specify):
     - Contenido: histórico de usos (primer uso)
     """
     if not NOTION_TOKEN or not NOTION_DATABASE_ID:
-        return False
+        return (False, "Missing Notion credentials")
 
     url = f"{NOTION_API_URL}/pages"
     now_utc = datetime.now(timezone.utc).isoformat()
@@ -218,16 +218,21 @@ def create_lead_page(name, email, num_notes, note_types, has_specify):
 
     try:
         resp = requests.post(url, json=payload, headers=notion_headers())
-        return resp.status_code in (200, 201)
-    except Exception:
-        return False
+        if resp.status_code in (200, 201):
+            return (True, "Success")
+        else:
+            error_msg = f"Status {resp.status_code}: {resp.text}"
+            return (False, error_msg)
+    except Exception as e:
+        return (False, str(e))
 
 def append_usage_to_page(page_id, num_notes, note_types, has_specify):
     """
     Añade un nuevo bloque de uso (divider + texto) al final de una página existente.
     """
     if not NOTION_TOKEN:
-        return False
+        return (False, "Missing Notion token")
+
     url = f"{NOTION_API_URL}/blocks/{page_id}/children"
     now_utc = datetime.now(timezone.utc).isoformat()
 
@@ -244,9 +249,13 @@ def append_usage_to_page(page_id, num_notes, note_types, has_specify):
 
     try:
         resp = requests.patch(url, json=payload, headers=notion_headers())
-        return resp.status_code in (200, 201)
-    except Exception:
-        return False
+        if resp.status_code in (200, 201):
+            return (True, "Success")
+        else:
+            error_msg = f"Status {resp.status_code}: {resp.text}"
+            return (False, error_msg)
+    except Exception as e:
+        return (False, str(e))
 
 def add_to_notion(name, email, num_notes, note_types, has_specify):
     """
@@ -255,7 +264,7 @@ def add_to_notion(name, email, num_notes, note_types, has_specify):
     - Si no existe → crea página nueva con Name, Email y App Source.
     """
     if not NOTION_TOKEN or not NOTION_DATABASE_ID:
-        return False
+        return (False, "Missing Notion credentials in secrets")
 
     page_id = find_page_by_email(email)
     if page_id:
@@ -611,7 +620,7 @@ if st.button("Submit Contact Information", use_container_width=True):
             # Use stored generation data if available
             if 'last_generation' in st.session_state:
                 gen_data = st.session_state['last_generation']
-                ok = add_to_notion(
+                success, message = add_to_notion(
                     user_name,
                     user_email,
                     gen_data['num_notes'],
@@ -620,7 +629,7 @@ if st.button("Submit Contact Information", use_container_width=True):
                 )
             else:
                 # User hasn't generated notes yet
-                ok = add_to_notion(
+                success, message = add_to_notion(
                     user_name,
                     user_email,
                     0,
@@ -628,10 +637,13 @@ if st.button("Submit Contact Information", use_container_width=True):
                     False
                 )
 
-            if ok:
+            if success:
                 st.success("✓ Your contact information has been saved. We'll be in touch soon!")
             else:
-                st.error("Your information could not be saved. Please try again later.")
+                st.error(f"Error: {message}")
+                # Show detailed error for debugging
+                with st.expander("Debug Information"):
+                    st.code(message)
         else:
             st.error("Please enter a valid email address.")
     elif user_email or user_name:
