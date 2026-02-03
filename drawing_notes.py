@@ -4,6 +4,38 @@ import pandas as pd
 # Page configuration
 st.set_page_config(page_title="Drawing Notes Generator", page_icon="📐", layout="wide")
 
+# Custom CSS for color #1BA099
+st.markdown("""
+<style>
+/* Checkbox color when checked */
+.stCheckbox > label > div[data-testid="stMarkdownContainer"] > p {
+    color: inherit;
+}
+
+/* Checkbox checked state */
+input[type="checkbox"]:checked {
+    background-color: #1BA099 !important;
+    border-color: #1BA099 !important;
+}
+
+/* Primary button color */
+.stDownloadButton > button {
+    background-color: #1BA099 !important;
+    border-color: #1BA099 !important;
+}
+
+.stDownloadButton > button:hover {
+    background-color: #158a82 !important;
+    border-color: #158a82 !important;
+}
+
+/* Selectbox focus */
+.stSelectbox > div > div:focus-within {
+    border-color: #1BA099 !important;
+}
+</style>
+""", unsafe_allow_html=True)
+
 # Title
 st.title("📐 Drawing Notes Generator")
 st.markdown("---")
@@ -64,7 +96,7 @@ if selected_notes:
         f"""
         <div style="position: relative;">
             <textarea id="textToCopy" style="width: 100%; height: 300px; padding: 10px; font-family: monospace; font-size: 14px; border: 1px solid #ddd; border-radius: 5px;">{final_text}</textarea>
-            <button onclick="copyToClipboard()" style="margin-top: 10px; background-color: #0066cc; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; font-size: 16px;">
+            <button onclick="copyToClipboard()" style="margin-top: 10px; background-color: #1BA099; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; font-size: 16px;">
                 📋 Copy to Clipboard
             </button>
             <span id="copyMessage" style="margin-left: 10px; color: green; font-weight: bold;"></span>
