@@ -1,6 +1,8 @@
 import streamlit as st
 import pandas as pd
 import re
+import requests
+from datetime import datetime, timezone
 
 # Page configuration with custom favicon
 st.set_page_config(
@@ -82,6 +84,184 @@ hr {
 </style>
 """, unsafe_allow_html=True)
 
+# Notion API configuration
+NOTION_TOKEN = st.secrets.get("NOTION_TOKEN", "")
+NOTION_DATABASE_ID = st.secrets.get("NOTION_DATABASE_ID", "")
+NOTION_API_URL = "https://api.notion.com/v1"
+NOTION_VERSION = "2022-06-28"
+
+# ---------- Notion helpers ----------
+def notion_headers():
+    return {
+        "Authorization": f"Bearer {NOTION_TOKEN}",
+        "Content-Type": "application/json",
+        "Notion-Version": NOTION_VERSION,
+    }
+
+def find_page_by_email(email: str):
+    """
+    Busca una página en la base de datos por el valor de la propiedad Email.
+    Devuelve el page_id si la encuentra, si no devuelve None.
+    """
+    if not NOTION_TOKEN or not NOTION_DATABASE_ID:
+        return None
+    url = f"{NOTION_API_URL}/databases/{NOTION_DATABASE_ID}/query"
+    payload = {
+        "filter": {
+            "property": "Email",
+            "email": {
+                "equals": email
+            }
+        }
+    }
+    try:
+        resp = requests.post(url, json=payload, headers=notion_headers())
+        if resp.status_code != 200:
+            return None
+        data = resp.json()
+        results = data.get("results", [])
+        if not results:
+            return None
+        return results[0]["id"]
+    except Exception:
+        return None
+
+def build_usage_block(timestamp_iso: str,
+                     num_notes: int,
+                     note_types: str,
+                     has_specify: bool) -> list:
+    """
+    Construye los bloques de contenido para un uso de la app.
+    Devuelve una lista de bloques Notion: [divider, paragraph].
+    """
+    dt = datetime.fromisoformat(timestamp_iso.replace("Z", "+00:00"))
+    human_ts = dt.strftime("%Y-%m-%d %H:%M UTC")
+
+    text_lines = [
+        f"**Date:** {human_ts}",
+        f"**Notes generated:** {num_notes}",
+        f"**Note types used:** {note_types}",
+        f"**Requires editing:** {'Yes (contains [specify] fields)' if has_specify else 'No'}",
+    ]
+
+    text_block = {
+        "object": "block",
+        "type": "paragraph",
+        "paragraph": {
+            "rich_text": [
+                {
+                    "type": "text",
+                    "text": {"content": "\n".join(text_lines)}
+                }
+            ]
+        }
+    }
+
+    divider_block = {
+        "object": "block",
+        "type": "divider",
+        "divider": {}
+    }
+
+    return [divider_block, text_block]
+
+def create_lead_page(name, email, num_notes, note_types, has_specify):
+    """
+    Crea una nueva página en la base de datos con:
+    - Propiedades: Name, Email, App Source
+    - Contenido: histórico de usos (primer uso)
+    """
+    if not NOTION_TOKEN or not NOTION_DATABASE_ID:
+        return False
+
+    url = f"{NOTION_API_URL}/pages"
+    now_utc = datetime.now(timezone.utc).isoformat()
+
+    children_blocks = build_usage_block(
+        timestamp_iso=now_utc,
+        num_notes=num_notes,
+        note_types=note_types,
+        has_specify=has_specify,
+    )
+
+    payload = {
+        "parent": {"database_id": NOTION_DATABASE_ID},
+        "properties": {
+            "Name": {
+                "title": [
+                    {"text": {"content": name}}
+                ]
+            },
+            "Email": {
+                "email": email
+            },
+            "App Source": {
+                "select": {
+                    "name": "Drawing Notes Generator"
+                }
+            },
+        },
+        "children": children_blocks
+    }
+
+    try:
+        resp = requests.post(url, json=payload, headers=notion_headers())
+        return resp.status_code in (200, 201)
+    except Exception:
+        return False
+
+def append_usage_to_page(page_id, num_notes, note_types, has_specify):
+    """
+    Añade un nuevo bloque de uso (divider + texto) al final de una página existente.
+    """
+    if not NOTION_TOKEN:
+        return False
+    url = f"{NOTION_API_URL}/blocks/{page_id}/children"
+    now_utc = datetime.now(timezone.utc).isoformat()
+
+    children_blocks = build_usage_block(
+        timestamp_iso=now_utc,
+        num_notes=num_notes,
+        note_types=note_types,
+        has_specify=has_specify,
+    )
+
+    payload = {
+        "children": children_blocks
+    }
+
+    try:
+        resp = requests.patch(url, json=payload, headers=notion_headers())
+        return resp.status_code in (200, 201)
+    except Exception:
+        return False
+
+def add_to_notion(name, email, num_notes, note_types, has_specify):
+    """
+    Lógica principal:
+    - Si ya hay una página para ese email → añade entrada nueva en la nota.
+    - Si no existe → crea página nueva con Name, Email y App Source.
+    """
+    if not NOTION_TOKEN or not NOTION_DATABASE_ID:
+        return False
+
+    page_id = find_page_by_email(email)
+    if page_id:
+        return append_usage_to_page(
+            page_id=page_id,
+            num_notes=num_notes,
+            note_types=note_types,
+            has_specify=has_specify,
+        )
+    else:
+        return create_lead_page(
+            name=name,
+            email=email,
+            num_notes=num_notes,
+            note_types=note_types,
+            has_specify=has_specify,
+        )
+
 # Header with title and logo
 header_col1, header_col2 = st.columns([2, 1])
 
@@ -90,7 +270,7 @@ with header_col1:
 
 with header_col2:
     st.markdown('<div class="logo-container">', unsafe_allow_html=True)
-    st.image("logoVerde.png", width=200)
+    st.image("logoVerde.png", width=400)
     st.markdown('</div>', unsafe_allow_html=True)
 
 st.markdown("---")
@@ -189,6 +369,15 @@ with col_right:
         selected_notes_data.sort(key=lambda x: (x['type_order'], x['original_index']))
         final_text = "\n\n".join([note['text'] for note in selected_notes_data])
         show_buttons = True
+
+        # Store generation info in session state for Notion
+        types_used = list(set([note['type'] for note in selected_notes_data]))
+        types_used.sort(key=lambda x: TYPE_ORDER.get(x, 999))
+        st.session_state['last_generation'] = {
+            'num_notes': len(selected_notes_data),
+            'note_types': ", ".join(types_used),
+            'has_specify': has_specify_fields
+        }
     else:
         final_text = "👈 Select notes from the left panel"
         show_buttons = False
@@ -385,3 +574,50 @@ with col_right:
 # Footer
 st.markdown("---")
 st.caption("🔧 Atlantis Prototyping - Drawing Notes Generator")
+
+# ---------- CONTACT SECTION ----------
+st.markdown("---")
+st.subheader("Need Help or Developing Your Project?")
+st.markdown("Leave your email and we'll contact you")
+
+col_name, col_email = st.columns(2)
+with col_name:
+    user_name = st.text_input("Name (optional)", placeholder="John Doe", key="optional_name")
+with col_email:
+    user_email = st.text_input("Email (optional)", placeholder="john@example.com", key="optional_email")
+
+# Submit contact info button
+if st.button("Submit Contact Information", use_container_width=True):
+    if user_email and user_name:
+        # Validate email format
+        if "@" in user_email and "." in user_email:
+            # Use stored generation data if available
+            if 'last_generation' in st.session_state:
+                gen_data = st.session_state['last_generation']
+                ok = add_to_notion(
+                    user_name,
+                    user_email,
+                    gen_data['num_notes'],
+                    gen_data['note_types'],
+                    gen_data['has_specify']
+                )
+            else:
+                # User hasn't generated notes yet
+                ok = add_to_notion(
+                    user_name,
+                    user_email,
+                    0,
+                    "Interest - No notes generated",
+                    False
+                )
+
+            if ok:
+                st.success("✓ Your contact information has been saved. We'll be in touch soon!")
+            else:
+                st.error("Your information could not be saved. Please try again later.")
+        else:
+            st.error("Please enter a valid email address.")
+    elif user_email or user_name:
+        st.warning("Please provide both name and email to submit your information.")
+    else:
+        st.info("Please enter your name and email if you'd like us to contact you.")
