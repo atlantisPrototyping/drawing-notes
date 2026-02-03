@@ -27,6 +27,7 @@ input[type="checkbox"] {
 /* Compact spacing */
 .stCheckbox {
     margin-bottom: 0.25rem !important;
+    padding: 0.25rem 0 !important;
 }
 
 div[data-testid="column"] {
@@ -35,37 +36,6 @@ div[data-testid="column"] {
 
 h3 {
     margin-bottom: 0.5rem !important;
-}
-
-/* Scrollable container for checkboxes */
-.checkbox-container {
-    height: 500px;
-    overflow-y: auto;
-    overflow-x: hidden;
-    padding-right: 10px;
-    border: 1px solid #444;
-    border-radius: 5px;
-    padding: 10px;
-    background-color: rgba(38, 39, 48, 0.4);
-}
-
-/* Custom scrollbar styling */
-.checkbox-container::-webkit-scrollbar {
-    width: 8px;
-}
-
-.checkbox-container::-webkit-scrollbar-track {
-    background: #262730;
-    border-radius: 4px;
-}
-
-.checkbox-container::-webkit-scrollbar-thumb {
-    background: #1BA099;
-    border-radius: 4px;
-}
-
-.checkbox-container::-webkit-scrollbar-thumb:hover {
-    background: #158a82;
 }
 </style>
 """, unsafe_allow_html=True)
@@ -127,25 +97,22 @@ with col_left:
     else:
         filtered_notes = df[df['Type'] == selected_type]
 
-    # Create scrollable container for checkboxes
-    st.markdown('<div class="checkbox-container">', unsafe_allow_html=True)
+    # Use container with fixed height for scrolling
+    with st.container(height=500):
+        # Show checkboxes for each note
+        for idx, row in filtered_notes.iterrows():
+            # Check if this note is already selected
+            is_checked = idx in st.session_state.selected_indices
 
-    # Show checkboxes for each note
-    for idx, row in filtered_notes.iterrows():
-        # Check if this note is already selected
-        is_checked = idx in st.session_state.selected_indices
+            # Use clear_trigger to force checkbox reset
+            checkbox_key = f"check_{idx}_{st.session_state.clear_trigger}"
 
-        # Use clear_trigger to force checkbox reset
-        checkbox_key = f"check_{idx}_{st.session_state.clear_trigger}"
-
-        if st.checkbox(f"**{row['Name']}** ({row['Type']})", 
-                      key=checkbox_key, 
-                      value=is_checked):
-            st.session_state.selected_indices.add(idx)
-        else:
-            st.session_state.selected_indices.discard(idx)
-
-    st.markdown('</div>', unsafe_allow_html=True)
+            if st.checkbox(f"**{row['Name']}** ({row['Type']})", 
+                          key=checkbox_key, 
+                          value=is_checked):
+                st.session_state.selected_indices.add(idx)
+            else:
+                st.session_state.selected_indices.discard(idx)
 
 with col_right:
     st.subheader("Generated Notes")
@@ -176,7 +143,7 @@ with col_right:
         final_text = "👈 Select notes from the left panel"
         show_buttons = False
 
-    # Create the HTML with buttons and visible scrollbar
+    # Create the HTML with buttons and VERY visible scrollbar
     button_section = ""
     if show_buttons:
         button_section = """
@@ -207,29 +174,40 @@ with col_right:
     st.components.v1.html(
         f"""
         <style>
-        /* Ensure scrollbar is always visible */
+        /* Make scrollbar VERY visible and always present */
+        #textToCopy {{
+            /* Force scrollbar to always show */
+            overflow-y: scroll !important;
+
+            /* Firefox scrollbar */
+            scrollbar-width: auto !important;
+            scrollbar-color: #1BA099 #00253D !important;
+        }}
+
+        /* Webkit (Chrome, Safari, Edge) scrollbar */
         #textToCopy::-webkit-scrollbar {{
-            width: 12px;
+            width: 14px !important;
+            display: block !important;
         }}
 
         #textToCopy::-webkit-scrollbar-track {{
-            background: #002340;
-            border-radius: 3px;
+            background: #00253D !important;
+            border-radius: 4px !important;
+            border: 1px solid #006DAA !important;
         }}
 
         #textToCopy::-webkit-scrollbar-thumb {{
-            background: #1BA099;
-            border-radius: 3px;
+            background: #1BA099 !important;
+            border-radius: 4px !important;
+            border: 2px solid #00253D !important;
         }}
 
         #textToCopy::-webkit-scrollbar-thumb:hover {{
-            background: #158a82;
+            background: #20BFB5 !important;
         }}
 
-        /* Force scrollbar to always show */
-        #textToCopy {{
-            scrollbar-color: #1BA099 #002340;
-            scrollbar-width: thin;
+        #textToCopy::-webkit-scrollbar-thumb:active {{
+            background: #158a82 !important;
         }}
         </style>
 
@@ -237,7 +215,7 @@ with col_right:
             <textarea id="textToCopy" style="
                 width: 100%; 
                 height: 500px; 
-                padding: 12px; 
+                padding: 12px 20px 12px 12px;
                 font-family: 'Courier New', monospace; 
                 font-size: 13px; 
                 background-color: #003559;
@@ -246,7 +224,7 @@ with col_right:
                 border-radius: 5px;
                 box-shadow: 0 0 10px rgba(0, 109, 170, 0.3);
                 resize: vertical;
-                overflow-y: scroll;
+                overflow-y: scroll !important;
                 {'text-align: center; padding-top: 230px; font-size: 16px;' if not show_buttons else ''}
             " {'readonly' if not show_buttons else ''}>{final_text}</textarea>
             {button_section}
