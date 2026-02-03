@@ -1,5 +1,6 @@
 import streamlit as st
 import pandas as pd
+import re
 
 # Page configuration
 st.set_page_config(page_title="Drawing Notes Generator", page_icon="📐", layout="wide")
@@ -34,13 +35,13 @@ div[data-testid="column"] {
     padding: 0.5rem !important;
 }
 
-/* Make headers more compact but not cut off */
+/* Make headers more compact but visible */
 h1 {
-    margin-top: 0.5rem !important;
+    margin-top: 0.75rem !important;
     margin-bottom: 0.75rem !important;
-    padding-top: 0 !important;
+    padding-top: 0.25rem !important;
     font-size: 2.2rem !important;
-    line-height: 1.2 !important;
+    line-height: 1.3 !important;
 }
 
 h3 {
@@ -62,7 +63,7 @@ hr {
 
 /* Reduce top padding of main block */
 .block-container {
-    padding-top: 1.5rem !important;
+    padding-top: 2rem !important;
     padding-bottom: 1rem !important;
 }
 </style>
@@ -127,9 +128,13 @@ with col_left:
             is_checked = idx in st.session_state.selected_indices
             checkbox_key = f"check_{idx}_{st.session_state.clear_trigger}"
 
-            if st.checkbox(f"**{row['Name']}** ({row['Type']})", 
-                          key=checkbox_key, 
-                          value=is_checked):
+            # Check if note contains [specify] placeholders
+            has_specify = '[specify' in row['Text'].lower()
+            label = f"**{row['Name']}** ({row['Type']})"
+            if has_specify:
+                label = f"⚠️ **{row['Name']}** ({row['Type']}) *- needs editing*"
+
+            if st.checkbox(label, key=checkbox_key, value=is_checked):
                 st.session_state.selected_indices.add(idx)
             else:
                 st.session_state.selected_indices.discard(idx)
@@ -140,11 +145,19 @@ with col_right:
     # Determine what text to show
     if st.session_state.selected_indices:
         selected_notes_data = []
+        has_specify_fields = False
+
         for idx in st.session_state.selected_indices:
             row = df.iloc[idx]
+            text = row['Text']
+
+            # Check if this note has [specify] fields
+            if '[specify' in text.lower():
+                has_specify_fields = True
+
             selected_notes_data.append({
                 'index': idx,
-                'text': row['Text'],
+                'text': text,
                 'name': row['Name'],
                 'type': row['Type'],
                 'type_order': TYPE_ORDER.get(row['Type'], 999),
@@ -157,10 +170,37 @@ with col_right:
     else:
         final_text = "👈 Select notes from the left panel"
         show_buttons = False
+        has_specify_fields = False
+
+    # Warning message if there are [specify] fields
+    warning_html = ""
+    if show_buttons and has_specify_fields:
+        warning_html = """
+            <div style="
+                background-color: #FFA50080;
+                border-left: 4px solid #FF8C00;
+                padding: 12px 15px;
+                margin-bottom: 10px;
+                border-radius: 4px;
+                display: flex;
+                align-items: center;
+                gap: 10px;
+            ">
+                <span style="font-size: 20px;">⚠️</span>
+                <div>
+                    <strong style="color: #FF8C00; font-size: 15px;">Action Required</strong>
+                    <p style="margin: 5px 0 0 0; font-size: 14px; color: #333;">
+                        Some notes contain <strong>[specify]</strong> placeholders. 
+                        Please edit these fields according to your requirements before using.
+                    </p>
+                </div>
+            </div>
+        """
 
     button_section = ""
     if show_buttons:
-        button_section = """
+        button_section = f"""
+            {warning_html}
             <div style="margin-top: 10px; display: flex; gap: 10px; align-items: center;">
                 <button onclick="copyToClipboard()" style="
                     background-color: #1BA099; 
@@ -185,7 +225,10 @@ with col_right:
             </div>
         """
 
-    # Textarea with scrollbar
+    # Highlight [specify] in the text using JavaScript
+    escaped_text = final_text.replace('\\', '\\\\').replace('"', '\\"').replace("'", "\\'")
+
+    # Textarea with scrollbar and highlighting
     st.components.v1.html(
         f"""
         <style>
@@ -226,6 +269,15 @@ with col_right:
         #textToCopy::-webkit-scrollbar-thumb:active {{
             background: #158a82 !important;
         }}
+
+        /* Highlight [specify] text */
+        .highlight-specify {{
+            background-color: #FFD700 !important;
+            color: #000000 !important;
+            font-weight: bold !important;
+            padding: 2px 4px !important;
+            border-radius: 2px !important;
+        }}
         </style>
 
         <div class="textarea-container">
@@ -251,8 +303,11 @@ with col_right:
         </div>
 
         <script>
+        // Highlight [specify] patterns in textarea on selection
+        const textarea = document.getElementById('textToCopy');
+
+        // Force scrollbar visibility
         window.addEventListener('load', function() {{
-            const textarea = document.getElementById('textToCopy');
             textarea.style.display = 'none';
             textarea.offsetHeight;
             textarea.style.display = 'block';
@@ -297,7 +352,7 @@ with col_right:
         }}
         </script>
         """,
-        height=560
+        height=640  # Increased to accommodate warning box
     )
 
     # Buttons below
