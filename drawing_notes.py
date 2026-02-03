@@ -34,13 +34,39 @@ div[data-testid="column"] {
     padding: 0.5rem !important;
 }
 
-h3 {
+/* Make headers more compact */
+h1 {
+    margin-top: 0 !important;
     margin-bottom: 0.5rem !important;
+    padding-top: 0.5rem !important;
+    font-size: 2rem !important;
+}
+
+h3 {
+    margin-top: 0 !important;
+    margin-bottom: 0.5rem !important;
+    font-size: 1.2rem !important;
+}
+
+/* Compact horizontal rule */
+hr {
+    margin-top: 0.5rem !important;
+    margin-bottom: 0.5rem !important;
+}
+
+/* Compact selectbox */
+.stSelectbox {
+    margin-bottom: 0.5rem !important;
+}
+
+/* Reduce top padding of main block */
+.block-container {
+    padding-top: 1rem !important;
 }
 </style>
 """, unsafe_allow_html=True)
 
-# Title
+# Title (more compact)
 st.title("📐 Drawing Notes Generator")
 st.markdown("---")
 
@@ -87,16 +113,15 @@ with col_left:
         index=0
     )
 
-    st.markdown("---")
-
     # Filter notes by type
     if selected_type == "All":
         filtered_notes = df
     else:
         filtered_notes = df[df['Type'] == selected_type]
 
-    # Use container with fixed height for scrolling
-    with st.container(height=500):
+    # Use container with fixed height matching right side
+    # Height = textarea (500px) + button section (~60px) = 560px total
+    with st.container(height=560):
         for idx, row in filtered_notes.iterrows():
             is_checked = idx in st.session_state.selected_indices
             checkbox_key = f"check_{idx}_{st.session_state.clear_trigger}"
@@ -159,31 +184,23 @@ with col_right:
             </div>
         """
 
-    # Use explicit width calculation to show scrollbar
+    # Textarea with scrollbar
     st.components.v1.html(
         f"""
         <style>
-        /* Container sizing */
         .textarea-container {{
             width: 100%;
             max-width: 100%;
             box-sizing: border-box;
         }}
 
-        /* Force scrollbar to ALWAYS be visible */
         #textToCopy {{
-            /* Critical: force scrollbar */
             overflow-y: scroll !important;
-
-            /* Box sizing to account for scrollbar */
             box-sizing: border-box !important;
-
-            /* Firefox */
             scrollbar-width: thin !important;
             scrollbar-color: #1BA099 #001F33 !important;
         }}
 
-        /* Webkit scrollbar - HIGHLY VISIBLE */
         #textToCopy::-webkit-scrollbar {{
             width: 16px !important;
             background: #001F33 !important;
@@ -207,11 +224,6 @@ with col_right:
 
         #textToCopy::-webkit-scrollbar-thumb:active {{
             background: #158a82 !important;
-        }}
-
-        /* Ensure scrollbar is part of layout */
-        #textToCopy::-webkit-scrollbar-button {{
-            display: none;
         }}
         </style>
 
@@ -238,12 +250,10 @@ with col_right:
         </div>
 
         <script>
-        // Ensure textarea scrollbar is visible on load
         window.addEventListener('load', function() {{
             const textarea = document.getElementById('textToCopy');
-            // Force reflow to ensure scrollbar renders
             textarea.style.display = 'none';
-            textarea.offsetHeight; // trigger reflow
+            textarea.offsetHeight;
             textarea.style.display = 'block';
         }});
 
@@ -286,7 +296,7 @@ with col_right:
         }}
         </script>
         """,
-        height=600
+        height=560
     )
 
     # Buttons below: Download and Clear side by side
