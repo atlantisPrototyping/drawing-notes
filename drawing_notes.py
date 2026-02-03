@@ -209,7 +209,7 @@ def create_lead_page(name, email, num_notes, note_types, has_specify):
             },
             "App Source": {
                 "select": {
-                    "name": "Drawing Notes Generator"
+                    "name": "Drawing notes"
                 }
             },
         },
@@ -587,6 +587,10 @@ with col_right:
                 st.session_state.selected_indices = set()
                 st.session_state.clear_trigger += 1
                 st.rerun()
+
+# Footer
+st.markdown("---")
+st.caption("🔧 Atlantis Prototyping - Drawing Notes Generator")
 
 # ---------- CONTACT SECTION ----------
 st.markdown("---")
