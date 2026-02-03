@@ -3,6 +3,8 @@ import pandas as pd
 import re
 import requests
 from datetime import datetime, timezone
+from pathlib import Path
+import base64
 
 # Page configuration with custom favicon
 st.set_page_config(
@@ -94,9 +96,14 @@ hr {
     margin-bottom: 0.5rem;
 }
 
-/* Make image clickable by wrapping in clickable div */
-.logo-container img {
-    cursor: pointer;
+.logo-link {
+    display: inline-block;
+    line-height: 0;
+    transition: opacity 0.2s;
+}
+
+.logo-link:hover {
+    opacity: 0.8;
 }
 </style>
 """, unsafe_allow_html=True)
@@ -280,6 +287,15 @@ def add_to_notion(name, email, num_notes, note_types, has_specify):
             has_specify=has_specify,
         )
 
+# Function to convert image to base64
+def get_image_base64(image_path):
+    """Convert image to base64 string"""
+    try:
+        with open(image_path, "rb") as img_file:
+            return base64.b64encode(img_file.read()).decode()
+    except:
+        return None
+
 # Header with title and logo
 header_col1, header_col2 = st.columns([2, 1])
 
@@ -287,12 +303,24 @@ with header_col1:
     st.title("📐 Drawing Notes Generator")
 
 with header_col2:
-    st.markdown('<div class="logo-container">', unsafe_allow_html=True)
-    # Use st.image with link parameter
-    st.link_button("", "https://www.atlantisprototyping.com", use_container_width=False)
-    # Image displayed separately - clicking anywhere in the column goes to link
-    st.image("logoVerde.png", width=200)
-    st.markdown('</div>', unsafe_allow_html=True)
+    # Try to load and encode logo
+    logo_base64 = get_image_base64("logoVerde.png")
+
+    if logo_base64:
+        logo_html = f"""
+        <div class="logo-container">
+            <a href="https://www.atlantisprototyping.com" target="_blank" class="logo-link">
+                <img src="data:image/png;base64,{logo_base64}" width="200" alt="Atlantis Prototyping">
+            </a>
+        </div>
+        """
+        st.markdown(logo_html, unsafe_allow_html=True)
+    else:
+        # Fallback if image can't be loaded
+        st.markdown(
+            '<div class="logo-container"><a href="https://www.atlantisprototyping.com" target="_blank">Atlantis Prototyping</a></div>',
+            unsafe_allow_html=True
+        )
 
 st.markdown("---")
 
