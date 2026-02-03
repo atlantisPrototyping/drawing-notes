@@ -1,97 +1,120 @@
 import streamlit as st
 import pandas as pd
-import pyperclip
 
-# Configuración de la página
+# Page configuration
 st.set_page_config(page_title="Drawing Notes Generator", page_icon="📐", layout="wide")
 
-# Título
-st.title("📐 Generador de Notas de Plano")
+# Title
+st.title("📐 Drawing Notes Generator")
 st.markdown("---")
 
-# Cargar datos
+# Load data
 @st.cache_data
 def load_data():
-    return pd.read_csv('drawing_notes.csv', encoding='utf-8-sig')
+    return pd.read_csv('Drawing-notes-294b36afa8f88077a5afcbf62c6e2997_all.csv', encoding='utf-8-sig')
 
 df = load_data()
 
-# Crear selector por tipo
+# Create type selector
 col1, col2 = st.columns([1, 2])
 
 with col1:
-    st.subheader("Selección de Tipo")
+    st.subheader("Type Selection")
 
-    # Obtener tipos únicos
-    tipos = df['Type'].unique().tolist()
-    tipos.sort()
+    # Get unique types
+    types = df['Type'].unique().tolist()
+    types.sort()
 
-    # Selector de tipo
-    tipo_seleccionado = st.selectbox(
-        "Tipo de pieza/conjunto:",
-        options=["Todos"] + tipos,
+    # Type selector
+    selected_type = st.selectbox(
+        "Part/Assembly type:",
+        options=["All"] + types,
         index=0
     )
 
-    # Filtrar notas según tipo
-    if tipo_seleccionado == "Todos":
-        notas_filtradas = df
+    # Filter notes by type
+    if selected_type == "All":
+        filtered_notes = df
     else:
-        notas_filtradas = df[df['Type'] == tipo_seleccionado]
+        filtered_notes = df[df['Type'] == selected_type]
 
-    st.info(f"**{len(notas_filtradas)}** notas disponibles")
+    st.info(f"**{len(filtered_notes)}** notes available")
 
 with col2:
-    st.subheader("Seleccionar Notas")
+    st.subheader("Select Notes")
 
-    # Mostrar checkboxes para cada nota
-    notas_seleccionadas = []
+    # Show checkboxes for each note
+    selected_notes = []
 
-    for idx, row in notas_filtradas.iterrows():
+    for idx, row in filtered_notes.iterrows():
         if st.checkbox(f"**{row['Name']}** ({row['Type']})", key=f"check_{idx}"):
-            notas_seleccionadas.append(row['Text'])
+            selected_notes.append(row['Text'])
 
 st.markdown("---")
 
-# Generar texto final
-if notas_seleccionadas:
-    st.subheader("📝 Notas Generadas")
+# Generate final text
+if selected_notes:
+    st.subheader("📝 Generated Notes")
 
-    # Combinar todas las notas seleccionadas
-    texto_final = "\n\n".join(notas_seleccionadas)
+    # Combine all selected notes
+    final_text = "\n\n".join(selected_notes)
 
-    # Mostrar el texto en un área de texto
-    st.text_area(
-        "Texto generado:",
-        value=texto_final,
-        height=300,
-        disabled=False
+    # Create custom HTML component with copy button using Clipboard API
+    st.components.v1.html(
+        f"""
+        <div style="position: relative;">
+            <textarea id="textToCopy" style="width: 100%; height: 300px; padding: 10px; font-family: monospace; font-size: 14px; border: 1px solid #ddd; border-radius: 5px;">{final_text}</textarea>
+            <button onclick="copyToClipboard()" style="margin-top: 10px; background-color: #0066cc; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; font-size: 16px;">
+                📋 Copy to Clipboard
+            </button>
+            <span id="copyMessage" style="margin-left: 10px; color: green; font-weight: bold;"></span>
+        </div>
+
+        <script>
+        function copyToClipboard() {{
+            const text = document.getElementById('textToCopy').value;
+
+            // Use modern Clipboard API
+            if (navigator.clipboard && window.isSecureContext) {{
+                navigator.clipboard.writeText(text).then(function() {{
+                    document.getElementById('copyMessage').textContent = '✅ Copied!';
+                    setTimeout(function() {{
+                        document.getElementById('copyMessage').textContent = '';
+                    }}, 2000);
+                }}, function(err) {{
+                    document.getElementById('copyMessage').textContent = '❌ Copy failed';
+                }});
+            }} else {{
+                // Fallback for older browsers
+                const textArea = document.getElementById('textToCopy');
+                textArea.select();
+                try {{
+                    document.execCommand('copy');
+                    document.getElementById('copyMessage').textContent = '✅ Copied!';
+                    setTimeout(function() {{
+                        document.getElementById('copyMessage').textContent = '';
+                    }}, 2000);
+                }} catch (err) {{
+                    document.getElementById('copyMessage').textContent = '❌ Copy failed';
+                }}
+            }}
+        }}
+        </script>
+        """,
+        height=400
     )
 
-    # Botón para copiar al portapapeles
-    col_btn1, col_btn2, col_btn3 = st.columns([1, 1, 2])
-
-    with col_btn1:
-        if st.button("📋 Copiar al Portapapeles", type="primary", use_container_width=True):
-            try:
-                pyperclip.copy(texto_final)
-                st.success("✅ ¡Copiado!")
-            except Exception as e:
-                st.error(f"Error al copiar: {e}")
-                st.info("Copia manual el texto del área de arriba")
-
-    with col_btn2:
-        # Botón de descarga
-        st.download_button(
-            label="💾 Descargar TXT",
-            data=texto_final,
-            file_name="drawing_notes.txt",
-            mime="text/plain",
-            use_container_width=True
-        )
+    # Download button
+    st.download_button(
+        label="💾 Download as TXT",
+        data=final_text,
+        file_name="drawing_notes.txt",
+        mime="text/plain",
+        use_container_width=False
+    )
 
 else:
-    st.info("👈 Selecciona al menos una nota de la izquierda para generar el texto")
+    st.info("👈 Select at least one note from the left to generate text")
 
 # Footer
 st.markdown("---")
