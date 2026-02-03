@@ -2,8 +2,12 @@ import streamlit as st
 import pandas as pd
 import re
 
-# Page configuration
-st.set_page_config(page_title="Drawing Notes Generator", page_icon="📐", layout="wide")
+# Page configuration with custom favicon
+st.set_page_config(
+    page_title="Drawing Notes Generator", 
+    page_icon="logoSimpleVerde.png",
+    layout="wide"
+)
 
 # Custom CSS
 st.markdown("""
@@ -66,11 +70,29 @@ hr {
     padding-top: 2rem !important;
     padding-bottom: 1rem !important;
 }
+
+/* Logo styling */
+.logo-container {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    margin-top: 0.5rem;
+    margin-bottom: 0.5rem;
+}
 </style>
 """, unsafe_allow_html=True)
 
-# Title
-st.title("📐 Drawing Notes Generator")
+# Header with title and logo
+header_col1, header_col2 = st.columns([2, 1])
+
+with header_col1:
+    st.title("📐 Drawing Notes Generator")
+
+with header_col2:
+    st.markdown('<div class="logo-container">', unsafe_allow_html=True)
+    st.image("logoVerde.png", width=400)
+    st.markdown('</div>', unsafe_allow_html=True)
+
 st.markdown("---")
 
 # Load data
@@ -225,10 +247,7 @@ with col_right:
             </div>
         """
 
-    # Highlight [specify] in the text using JavaScript
-    escaped_text = final_text.replace('\\', '\\\\').replace('"', '\\"').replace("'", "\\'")
-
-    # Textarea with scrollbar and highlighting
+    # Textarea with scrollbar
     st.components.v1.html(
         f"""
         <style>
@@ -269,15 +288,6 @@ with col_right:
         #textToCopy::-webkit-scrollbar-thumb:active {{
             background: #158a82 !important;
         }}
-
-        /* Highlight [specify] text */
-        .highlight-specify {{
-            background-color: #FFD700 !important;
-            color: #000000 !important;
-            font-weight: bold !important;
-            padding: 2px 4px !important;
-            border-radius: 2px !important;
-        }}
         </style>
 
         <div class="textarea-container">
@@ -303,11 +313,9 @@ with col_right:
         </div>
 
         <script>
-        // Highlight [specify] patterns in textarea on selection
-        const textarea = document.getElementById('textToCopy');
-
         // Force scrollbar visibility
         window.addEventListener('load', function() {{
+            const textarea = document.getElementById('textToCopy');
             textarea.style.display = 'none';
             textarea.offsetHeight;
             textarea.style.display = 'block';
@@ -352,7 +360,7 @@ with col_right:
         }}
         </script>
         """,
-        height=640  # Increased to accommodate warning box
+        height=640
     )
 
     # Buttons below
