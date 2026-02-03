@@ -4,7 +4,7 @@ import pandas as pd
 # Page configuration
 st.set_page_config(page_title="Drawing Notes Generator", page_icon="📐", layout="wide")
 
-# Custom CSS for color #1BA099 with stronger selectors
+# Custom CSS
 st.markdown("""
 <style>
 /* Force checkbox color when checked */
@@ -24,16 +24,17 @@ input[type="checkbox"] {
     border-color: #158a82 !important;
 }
 
-/* Clear button */
-.stButton > button {
-    background-color: #dc3545 !important;
-    border-color: #dc3545 !important;
-    color: white !important;
+/* Compact spacing */
+.stCheckbox {
+    margin-bottom: 0.25rem !important;
 }
 
-.stButton > button:hover {
-    background-color: #c82333 !important;
-    border-color: #bd2130 !important;
+div[data-testid="column"] {
+    padding: 0.5rem !important;
+}
+
+h3 {
+    margin-bottom: 0.5rem !important;
 }
 </style>
 """, unsafe_allow_html=True)
@@ -49,28 +50,45 @@ def load_data():
 
 df = load_data()
 
-# Initialize session state for selected notes
+# Initialize session state
 if 'selected_notes' not in st.session_state:
     st.session_state.selected_notes = []
 if 'selected_indices' not in st.session_state:
     st.session_state.selected_indices = set()
+if 'clear_trigger' not in st.session_state:
+    st.session_state.clear_trigger = 0
 
-# Create type selector
-col1, col2 = st.columns([1, 2])
+# Two main columns: left for selection, right for text output
+col_left, col_right = st.columns([1, 1.5])
 
-with col1:
-    st.subheader("Type Selection")
+with col_left:
+    st.subheader("Select Notes")
 
-    # Get unique types
-    types = df['Type'].unique().tolist()
-    types.sort()
+    # Type selector and clear button in same row
+    col_select, col_clear = st.columns([2, 1])
 
-    # Type selector
-    selected_type = st.selectbox(
-        "Part/Assembly type:",
-        options=["All"] + types,
-        index=0
-    )
+    with col_select:
+        # Get unique types
+        types = df['Type'].unique().tolist()
+        types.sort()
+
+        # Type selector
+        selected_type = st.selectbox(
+            "Filter by type:",
+            options=["All"] + types,
+            index=0
+        )
+
+    with col_clear:
+        # Clear button with proper spacing
+        st.write("")  # Spacer for alignment
+        if st.button("🗑️ Clear", use_container_width=True):
+            st.session_state.selected_notes = []
+            st.session_state.selected_indices = set()
+            st.session_state.clear_trigger += 1
+            st.rerun()
+
+    st.markdown("---")
 
     # Filter notes by type
     if selected_type == "All":
@@ -78,24 +96,16 @@ with col1:
     else:
         filtered_notes = df[df['Type'] == selected_type]
 
-    st.info(f"**{len(filtered_notes)}** notes available")
-
-    # Clear button
-    if st.button("🗑️ Clear All Notes", use_container_width=True):
-        st.session_state.selected_notes = []
-        st.session_state.selected_indices = set()
-        st.rerun()
-
-with col2:
-    st.subheader("Select Notes")
-
     # Show checkboxes for each note
     for idx, row in filtered_notes.iterrows():
         # Check if this note is already selected
         is_checked = idx in st.session_state.selected_indices
 
+        # Use clear_trigger to force checkbox reset
+        checkbox_key = f"check_{idx}_{st.session_state.clear_trigger}"
+
         if st.checkbox(f"**{row['Name']}** ({row['Type']})", 
-                      key=f"check_{idx}", 
+                      key=checkbox_key, 
                       value=is_checked):
             # Add to selected notes if not already there
             if idx not in st.session_state.selected_indices:
@@ -115,104 +125,102 @@ with col2:
                 ]
                 st.session_state.selected_indices.remove(idx)
 
-st.markdown("---")
+with col_right:
+    st.subheader("Generated Notes")
 
-# Generate final text
-if st.session_state.selected_notes:
-    st.subheader("📝 Generated Notes")
+    if st.session_state.selected_notes:
+        # Combine all selected notes in order
+        final_text = "\n\n".join([note['text'] for note in st.session_state.selected_notes])
 
-    # Show selected notes count
-    st.info(f"**{len(st.session_state.selected_notes)}** notes selected")
+        # Create custom HTML component with blueprint style
+        st.components.v1.html(
+            f"""
+            <div style="position: relative;">
+                <textarea id="textToCopy" style="
+                    width: 100%; 
+                    height: 450px; 
+                    padding: 12px; 
+                    font-family: 'Courier New', monospace; 
+                    font-size: 13px; 
+                    background-color: #003559;
+                    color: #FFFFFF;
+                    border: 2px solid #006DAA;
+                    border-radius: 5px;
+                    box-shadow: 0 0 10px rgba(0, 109, 170, 0.3);
+                    resize: vertical;
+                ">{final_text}</textarea>
+                <div style="margin-top: 10px; display: flex; gap: 10px; align-items: center;">
+                    <button onclick="copyToClipboard()" style="
+                        background-color: #1BA099; 
+                        color: white; 
+                        padding: 10px 20px; 
+                        border: none; 
+                        border-radius: 5px; 
+                        cursor: pointer; 
+                        font-size: 15px; 
+                        font-weight: 500;
+                        transition: background-color 0.3s;
+                    ">
+                        📋 Copy to Clipboard
+                    </button>
+                    <span id="copyMessage" style="color: #1BA099; font-weight: bold;"></span>
+                </div>
+            </div>
 
-    # Combine all selected notes in order
-    final_text = "\n\n".join([note['text'] for note in st.session_state.selected_notes])
+            <script>
+            // Add hover effect to button
+            const btn = document.querySelector('button');
+            btn.addEventListener('mouseenter', function() {{
+                this.style.backgroundColor = '#158a82';
+            }});
+            btn.addEventListener('mouseleave', function() {{
+                this.style.backgroundColor = '#1BA099';
+            }});
 
-    # Create custom HTML component with blueprint style
-    st.components.v1.html(
-        f"""
-        <div style="position: relative;">
-            <textarea id="textToCopy" style="
-                width: 100%; 
-                height: 300px; 
-                padding: 10px; 
-                font-family: 'Courier New', monospace; 
-                font-size: 14px; 
-                background-color: #003559;
-                color: #FFFFFF;
-                border: 2px solid #006DAA;
-                border-radius: 5px;
-                box-shadow: 0 0 10px rgba(0, 109, 170, 0.3);
-            ">{final_text}</textarea>
-            <button onclick="copyToClipboard()" style="
-                margin-top: 10px; 
-                background-color: #1BA099; 
-                color: white; 
-                padding: 10px 20px; 
-                border: none; 
-                border-radius: 5px; 
-                cursor: pointer; 
-                font-size: 16px; 
-                transition: background-color 0.3s;
-            ">
-                📋 Copy to Clipboard
-            </button>
-            <span id="copyMessage" style="margin-left: 10px; color: #1BA099; font-weight: bold;"></span>
-        </div>
+            function copyToClipboard() {{
+                const text = document.getElementById('textToCopy').value;
 
-        <script>
-        // Add hover effect to button
-        const btn = document.querySelector('button');
-        btn.addEventListener('mouseenter', function() {{
-            this.style.backgroundColor = '#158a82';
-        }});
-        btn.addEventListener('mouseleave', function() {{
-            this.style.backgroundColor = '#1BA099';
-        }});
-
-        function copyToClipboard() {{
-            const text = document.getElementById('textToCopy').value;
-
-            // Use modern Clipboard API
-            if (navigator.clipboard && window.isSecureContext) {{
-                navigator.clipboard.writeText(text).then(function() {{
-                    document.getElementById('copyMessage').textContent = '✅ Copied!';
-                    setTimeout(function() {{
-                        document.getElementById('copyMessage').textContent = '';
-                    }}, 2000);
-                }}, function(err) {{
-                    document.getElementById('copyMessage').textContent = '❌ Copy failed';
-                }});
-            }} else {{
-                // Fallback for older browsers
-                const textArea = document.getElementById('textToCopy');
-                textArea.select();
-                try {{
-                    document.execCommand('copy');
-                    document.getElementById('copyMessage').textContent = '✅ Copied!';
-                    setTimeout(function() {{
-                        document.getElementById('copyMessage').textContent = '';
-                    }}, 2000);
-                }} catch (err) {{
-                    document.getElementById('copyMessage').textContent = '❌ Copy failed';
+                // Use modern Clipboard API
+                if (navigator.clipboard && window.isSecureContext) {{
+                    navigator.clipboard.writeText(text).then(function() {{
+                        document.getElementById('copyMessage').textContent = '✅ Copied!';
+                        setTimeout(function() {{
+                            document.getElementById('copyMessage').textContent = '';
+                        }}, 2000);
+                    }}, function(err) {{
+                        document.getElementById('copyMessage').textContent = '❌ Copy failed';
+                    }});
+                }} else {{
+                    // Fallback for older browsers
+                    const textArea = document.getElementById('textToCopy');
+                    textArea.select();
+                    try {{
+                        document.execCommand('copy');
+                        document.getElementById('copyMessage').textContent = '✅ Copied!';
+                        setTimeout(function() {{
+                            document.getElementById('copyMessage').textContent = '';
+                        }}, 2000);
+                    }} catch (err) {{
+                        document.getElementById('copyMessage').textContent = '❌ Copy failed';
+                    }}
                 }}
             }}
-        }}
-        </script>
-        """,
-        height=400
-    )
+            </script>
+            """,
+            height=550
+        )
 
-    # Download button
-    st.download_button(
-        label="💾 Download as TXT",
-        data=final_text,
-        file_name="drawing_notes.txt",
-        mime="text/plain",
-        use_container_width=False
-    )
+        # Download button below
+        st.download_button(
+            label="💾 Download as TXT",
+            data=final_text,
+            file_name="drawing_notes.txt",
+            mime="text/plain",
+            use_container_width=False
+        )
 
-else:
-    st.info("👈 Select at least one note from the left to generate text")
+    else:
+        st.info("👈 Select notes from the left panel")
 
 # Footer
 st.markdown("---")
