@@ -11,7 +11,7 @@ st.markdown("---")
 # Load data
 @st.cache_data
 def load_data():
-    return pd.read_csv('Drawing-notes-294b36afa8f88077a5afcbf62c6e2997_all.csv', encoding='utf-8-sig')
+    return pd.read_csv('drawing_notes.csv', encoding='utf-8-sig')
 
 df = load_data()
 
