@@ -163,20 +163,6 @@ with col_right:
                     ">
                         📋 Copy to Clipboard
                     </button>
-                    <button onclick="clearNotes()" style="
-                        background-color: #D94848; 
-                        color: white; 
-                        padding: 10px 20px; 
-                        border: none; 
-                        border-radius: 5px; 
-                        cursor: pointer; 
-                        font-size: 15px; 
-                        font-weight: 500;
-                        transition: background-color 0.3s;
-                        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-                    ">
-                        🗑️ Clear
-                    </button>
                     <span id="copyMessage" style="
                         color: #1BA099; 
                         font-weight: 600;
@@ -187,22 +173,14 @@ with col_right:
             </div>
 
             <script>
-            // Add hover effects to buttons
-            const copyBtn = document.querySelectorAll('button')[0];
-            const clearBtn = document.querySelectorAll('button')[1];
+            // Add hover effects to button
+            const copyBtn = document.querySelector('button');
 
             copyBtn.addEventListener('mouseenter', function() {{
                 this.style.backgroundColor = '#158a82';
             }});
             copyBtn.addEventListener('mouseleave', function() {{
                 this.style.backgroundColor = '#1BA099';
-            }});
-
-            clearBtn.addEventListener('mouseenter', function() {{
-                this.style.backgroundColor = '#B83838';
-            }});
-            clearBtn.addEventListener('mouseleave', function() {{
-                this.style.backgroundColor = '#D94848';
             }});
 
             function copyToClipboard() {{
@@ -233,31 +211,14 @@ with col_right:
                     }}
                 }}
             }}
-
-            function clearNotes() {{
-                // Trigger Streamlit rerun to clear selections
-                window.parent.postMessage({{
-                    type: 'streamlit:setComponentValue',
-                    value: 'clear'
-                }}, '*');
-
-                // Show confirmation message
-                document.getElementById('copyMessage').textContent = '🗑️ Cleared!';
-                document.getElementById('copyMessage').style.color = '#D94848';
-                setTimeout(function() {{
-                    document.getElementById('copyMessage').textContent = '';
-                    document.getElementById('copyMessage').style.color = '#1BA099';
-                    // Reload page to clear
-                    window.parent.location.reload();
-                }}, 1000);
-            }}
             </script>
             """,
             height=550
         )
 
-        # Download button below with proper alignment
-        col_download, col_spacer = st.columns([1, 3])
+        # Buttons below: Download and Clear side by side
+        col_download, col_clear, col_spacer = st.columns([1, 1, 2])
+
         with col_download:
             st.download_button(
                 label="💾 Download as TXT",
@@ -266,6 +227,12 @@ with col_right:
                 mime="text/plain",
                 use_container_width=True
             )
+
+        with col_clear:
+            if st.button("🗑️ Clear All", use_container_width=True, type="secondary"):
+                st.session_state.selected_indices = set()
+                st.session_state.clear_trigger += 1
+                st.rerun()
 
     else:
         st.info("👈 Select notes from the left panel")
