@@ -50,16 +50,18 @@ def load_data():
 
 df = load_data()
 
-# Define logical order for drawing notes (typical engineering drawing sequence)
+# Define logical order for drawing notes (engineering drawing standard sequence)
 TYPE_ORDER = {
-    'General': 0,
-    'Tolerances': 1,
-    'Metalic': 2,
-    'Sheetmetal': 3,
-    'Tube': 4,
-    'Weld': 5,
-    'Assembly': 6,
-    'Inspection': 7
+    'General': 0,           # General information first
+    'Tolerances': 1,        # Tolerance specifications
+    'Metalic': 2,          # Metallic part machining
+    'Sheetmetal': 3,       # Sheet metal operations
+    'Tube': 4,             # Tube operations
+    'Weld': 5,             # Welding operations
+    'Heat Treatment': 6,   # Heat treatment after welding
+    'Surface Treatment': 7,# Surface finishing after heat treatment
+    'Assembly': 8,         # Assembly operations
+    'Inspection': 9        # Final inspection
 }
 
 # Initialize session state
@@ -76,7 +78,8 @@ with col_left:
 
     # Type selector
     types = df['Type'].unique().tolist()
-    types.sort()
+    # Sort types by logical order
+    types.sort(key=lambda x: TYPE_ORDER.get(x, 999))
 
     # Type selector
     selected_type = st.selectbox(
@@ -126,7 +129,7 @@ with col_right:
                 'original_index': idx
             })
 
-        # Sort by: 1) Type order, 2) Original CSV index
+        # Sort by: 1) Type order, 2) Original CSV index (maintains logical order within type)
         selected_notes_data.sort(key=lambda x: (x['type_order'], x['original_index']))
 
         # Combine all selected notes in logical order
