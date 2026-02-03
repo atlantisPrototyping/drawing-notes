@@ -93,6 +93,11 @@ hr {
     margin-top: 0.5rem;
     margin-bottom: 0.5rem;
 }
+
+.logo-container a {
+    display: inline-block;
+    line-height: 0;
+}
 </style>
 """, unsafe_allow_html=True)
 
@@ -184,7 +189,7 @@ def create_lead_page(name, email, num_notes, note_types, has_specify):
     - Contenido: histórico de usos (primer uso)
     """
     if not NOTION_TOKEN or not NOTION_DATABASE_ID:
-        return (False, "Missing Notion credentials")
+        return False
 
     url = f"{NOTION_API_URL}/pages"
     now_utc = datetime.now(timezone.utc).isoformat()
@@ -218,20 +223,16 @@ def create_lead_page(name, email, num_notes, note_types, has_specify):
 
     try:
         resp = requests.post(url, json=payload, headers=notion_headers())
-        if resp.status_code in (200, 201):
-            return (True, "Success")
-        else:
-            error_msg = f"Status {resp.status_code}: {resp.text}"
-            return (False, error_msg)
-    except Exception as e:
-        return (False, str(e))
+        return resp.status_code in (200, 201)
+    except Exception:
+        return False
 
 def append_usage_to_page(page_id, num_notes, note_types, has_specify):
     """
     Añade un nuevo bloque de uso (divider + texto) al final de una página existente.
     """
     if not NOTION_TOKEN:
-        return (False, "Missing Notion token")
+        return False
 
     url = f"{NOTION_API_URL}/blocks/{page_id}/children"
     now_utc = datetime.now(timezone.utc).isoformat()
@@ -249,13 +250,9 @@ def append_usage_to_page(page_id, num_notes, note_types, has_specify):
 
     try:
         resp = requests.patch(url, json=payload, headers=notion_headers())
-        if resp.status_code in (200, 201):
-            return (True, "Success")
-        else:
-            error_msg = f"Status {resp.status_code}: {resp.text}"
-            return (False, error_msg)
-    except Exception as e:
-        return (False, str(e))
+        return resp.status_code in (200, 201)
+    except Exception:
+        return False
 
 def add_to_notion(name, email, num_notes, note_types, has_specify):
     """
@@ -264,7 +261,7 @@ def add_to_notion(name, email, num_notes, note_types, has_specify):
     - Si no existe → crea página nueva con Name, Email y App Source.
     """
     if not NOTION_TOKEN or not NOTION_DATABASE_ID:
-        return (False, "Missing Notion credentials in secrets")
+        return False
 
     page_id = find_page_by_email(email)
     if page_id:
@@ -290,14 +287,14 @@ with header_col1:
     st.title("📐 Drawing Notes Generator")
 
 with header_col2:
-    st.markdown('<div class="logo-container">', unsafe_allow_html=True)
-    st.markdown(
-        '<a href="https://www.atlantisprototyping.com" target="_blank">',
-        unsafe_allow_html=True,
-    )
-    st.image("logoVerde.png", width=200)
-    st.markdown("</a>", unsafe_allow_html=True)
-    st.markdown('</div>', unsafe_allow_html=True)
+    logo_html = """
+    <div class="logo-container">
+        <a href="https://www.atlantisprototyping.com" target="_blank">
+            <img src="app/static/logoVerde.png" width="200">
+        </a>
+    </div>
+    """
+    st.markdown(logo_html, unsafe_allow_html=True)
 
 st.markdown("---")
 
@@ -597,10 +594,6 @@ with col_right:
                 st.session_state.clear_trigger += 1
                 st.rerun()
 
-# Footer
-st.markdown("---")
-st.caption("🔧 Atlantis Prototyping - Drawing Notes Generator")
-
 # ---------- CONTACT SECTION ----------
 st.markdown("---")
 st.subheader("Need Help or Developing Your Project?")
@@ -620,7 +613,7 @@ if st.button("Submit Contact Information", use_container_width=True):
             # Use stored generation data if available
             if 'last_generation' in st.session_state:
                 gen_data = st.session_state['last_generation']
-                success, message = add_to_notion(
+                ok = add_to_notion(
                     user_name,
                     user_email,
                     gen_data['num_notes'],
@@ -629,7 +622,7 @@ if st.button("Submit Contact Information", use_container_width=True):
                 )
             else:
                 # User hasn't generated notes yet
-                success, message = add_to_notion(
+                ok = add_to_notion(
                     user_name,
                     user_email,
                     0,
@@ -637,13 +630,10 @@ if st.button("Submit Contact Information", use_container_width=True):
                     False
                 )
 
-            if success:
+            if ok:
                 st.success("✓ Your contact information has been saved. We'll be in touch soon!")
             else:
-                st.error(f"Error: {message}")
-                # Show detailed error for debugging
-                with st.expander("Debug Information"):
-                    st.code(message)
+                st.error("Your information could not be saved. Please try again later.")
         else:
             st.error("Please enter a valid email address.")
     elif user_email or user_name:
