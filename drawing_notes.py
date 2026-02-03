@@ -53,16 +53,16 @@ df = load_data()
 
 # Define logical order for drawing notes (engineering drawing standard sequence)
 TYPE_ORDER = {
-    'General': 0,           # General information first
-    'Tolerances': 1,        # Tolerance specifications
-    'Metalic': 2,          # Metallic part machining
-    'Sheetmetal': 3,       # Sheet metal operations
-    'Tube': 4,             # Tube operations
-    'Weld': 5,             # Welding operations
-    'Heat Treatment': 6,   # Heat treatment after welding
-    'Surface Treatment': 7,# Surface finishing after heat treatment
-    'Assembly': 8,         # Assembly operations
-    'Inspection': 9        # Final inspection
+    'General': 0,
+    'Tolerances': 1,
+    'Metalic': 2,
+    'Sheetmetal': 3,
+    'Tube': 4,
+    'Weld': 5,
+    'Heat Treatment': 6,
+    'Surface Treatment': 7,
+    'Assembly': 8,
+    'Inspection': 9
 }
 
 # Initialize session state
@@ -79,10 +79,8 @@ with col_left:
 
     # Type selector
     types = df['Type'].unique().tolist()
-    # Sort types by logical order
     types.sort(key=lambda x: TYPE_ORDER.get(x, 999))
 
-    # Type selector
     selected_type = st.selectbox(
         "Filter by type:",
         options=["All"] + types,
@@ -99,12 +97,8 @@ with col_left:
 
     # Use container with fixed height for scrolling
     with st.container(height=500):
-        # Show checkboxes for each note
         for idx, row in filtered_notes.iterrows():
-            # Check if this note is already selected
             is_checked = idx in st.session_state.selected_indices
-
-            # Use clear_trigger to force checkbox reset
             checkbox_key = f"check_{idx}_{st.session_state.clear_trigger}"
 
             if st.checkbox(f"**{row['Name']}** ({row['Type']})", 
@@ -119,7 +113,6 @@ with col_right:
 
     # Determine what text to show
     if st.session_state.selected_indices:
-        # Get selected notes from dataframe and sort by logical order
         selected_notes_data = []
         for idx in st.session_state.selected_indices:
             row = df.iloc[idx]
@@ -132,18 +125,13 @@ with col_right:
                 'original_index': idx
             })
 
-        # Sort by: 1) Type order, 2) Original CSV index (maintains logical order within type)
         selected_notes_data.sort(key=lambda x: (x['type_order'], x['original_index']))
-
-        # Combine all selected notes in logical order
         final_text = "\n\n".join([note['text'] for note in selected_notes_data])
         show_buttons = True
     else:
-        # Show placeholder message when empty
         final_text = "👈 Select notes from the left panel"
         show_buttons = False
 
-    # Create the HTML with buttons and VERY visible scrollbar
     button_section = ""
     if show_buttons:
         button_section = """
@@ -171,66 +159,94 @@ with col_right:
             </div>
         """
 
+    # Use explicit width calculation to show scrollbar
     st.components.v1.html(
         f"""
         <style>
-        /* Make scrollbar VERY visible and always present */
-        #textToCopy {{
-            /* Force scrollbar to always show */
-            overflow-y: scroll !important;
-
-            /* Firefox scrollbar */
-            scrollbar-width: auto !important;
-            scrollbar-color: #1BA099 #00253D !important;
+        /* Container sizing */
+        .textarea-container {{
+            width: 100%;
+            max-width: 100%;
+            box-sizing: border-box;
         }}
 
-        /* Webkit (Chrome, Safari, Edge) scrollbar */
+        /* Force scrollbar to ALWAYS be visible */
+        #textToCopy {{
+            /* Critical: force scrollbar */
+            overflow-y: scroll !important;
+
+            /* Box sizing to account for scrollbar */
+            box-sizing: border-box !important;
+
+            /* Firefox */
+            scrollbar-width: thin !important;
+            scrollbar-color: #1BA099 #001F33 !important;
+        }}
+
+        /* Webkit scrollbar - HIGHLY VISIBLE */
         #textToCopy::-webkit-scrollbar {{
-            width: 14px !important;
-            display: block !important;
+            width: 16px !important;
+            background: #001F33 !important;
         }}
 
         #textToCopy::-webkit-scrollbar-track {{
-            background: #00253D !important;
-            border-radius: 4px !important;
-            border: 1px solid #006DAA !important;
+            background: #001F33 !important;
+            border-left: 2px solid #006DAA !important;
         }}
 
         #textToCopy::-webkit-scrollbar-thumb {{
             background: #1BA099 !important;
-            border-radius: 4px !important;
-            border: 2px solid #00253D !important;
+            border: 3px solid #001F33 !important;
+            border-radius: 8px !important;
+            min-height: 40px !important;
         }}
 
         #textToCopy::-webkit-scrollbar-thumb:hover {{
-            background: #20BFB5 !important;
+            background: #25D5CA !important;
         }}
 
         #textToCopy::-webkit-scrollbar-thumb:active {{
             background: #158a82 !important;
         }}
+
+        /* Ensure scrollbar is part of layout */
+        #textToCopy::-webkit-scrollbar-button {{
+            display: none;
+        }}
         </style>
 
-        <div style="position: relative;">
+        <div class="textarea-container">
             <textarea id="textToCopy" style="
-                width: 100%; 
+                width: calc(100% - 4px);
                 height: 500px; 
-                padding: 12px 20px 12px 12px;
+                padding: 12px;
+                margin: 0;
                 font-family: 'Courier New', monospace; 
                 font-size: 13px; 
+                line-height: 1.5;
                 background-color: #003559;
                 color: #FFFFFF;
                 border: 2px solid #006DAA;
                 border-radius: 5px;
                 box-shadow: 0 0 10px rgba(0, 109, 170, 0.3);
                 resize: vertical;
-                overflow-y: scroll !important;
+                overflow-y: scroll;
+                box-sizing: border-box;
                 {'text-align: center; padding-top: 230px; font-size: 16px;' if not show_buttons else ''}
             " {'readonly' if not show_buttons else ''}>{final_text}</textarea>
             {button_section}
         </div>
 
         <script>
+        // Ensure textarea scrollbar is visible on load
+        window.addEventListener('load', function() {{
+            const textarea = document.getElementById('textToCopy');
+            // Force reflow to ensure scrollbar renders
+            textarea.style.display = 'none';
+            textarea.offsetHeight; // trigger reflow
+            textarea.style.display = 'block';
+        }});
+
         const buttons = document.querySelectorAll('button');
 
         if (buttons.length > 0) {{
